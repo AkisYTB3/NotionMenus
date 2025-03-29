@@ -4,6 +4,7 @@ import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
@@ -23,6 +24,7 @@ public class ActionUtil {
     private static final Random random = new Random();
     private static final Pattern DELAY_PATTERN = Pattern.compile("<delay=(\\d+)>");
     private static final Pattern CHANCE_PATTERN = Pattern.compile("<chance=(\\d+)>");
+    private static final GsonComponentSerializer GSON_SERIALIZER = GsonComponentSerializer.gson();
 
     public static void executeAction(String action, Player player) {
         executeAction(action, player, null);
@@ -282,21 +284,25 @@ public class ActionUtil {
         String json = processContent(action.substring(startIndex), player, event);
 
         try {
+            Component component = GSON_SERIALIZER.deserialize(json);
+
             if (broadcast) {
-                for (Player online : Bukkit.getOnlinePlayers()) {
-                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
-                            "tellraw " + online.getName() + " " + json);
-                }
+                Bukkit.getServer().sendMessage(component);
             } else {
-                Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
-                        "tellraw " + player.getName() + " " + json);
+                player.sendMessage(component);
             }
         } catch (Exception e) {
+            String errorMessage = broadcast ?
+                    "Invalid JSON broadcast message format" :
+                    "<red>Invalid JSON message format";
+
             if (broadcast) {
-                NotionMenus.getInstance().getLogger().warning("Invalid JSON broadcast message format");
+                NotionMenus.getInstance().getLogger().warning(errorMessage);
             } else {
-                player.sendMessage(MiniMessage.miniMessage().deserialize("<red>Invalid JSON message format"));
+                player.sendMessage(MiniMessage.miniMessage().deserialize(errorMessage));
             }
+
+            NotionMenus.getInstance().getLogger().warning("JSON Error: " + e.getMessage());
         }
     }
 
