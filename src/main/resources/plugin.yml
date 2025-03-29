@@ -9,9 +9,3 @@ softdepend:
   - PlaceholderAPI
   - ItemsAdder
   - Vault
-commands:
-  notionmenus:
-    aliases:
-      - nm
-      - notion
-      - nmenus

@@ -1,4 +1,5 @@
 plugins {
+    id 'com.gradleup.shadow' version '8.3.0'
     id 'java'
 }
 
@@ -13,10 +14,13 @@ repositories {
     maven { url 'https://repo.nexomc.com/snapshots' }
     maven { url 'https://repo.extendedclip.com/content/repositories/placeholderapi/' }
     maven { url 'https://maven.devs.beer/' }
+    maven { url 'https://repo.aikar.co/content/groups/aikar/' }
 }
 
 dependencies {
     compileOnly("io.papermc.paper:paper-api:${paperapi}")
+
+    implementation("co.aikar:acf-paper:${paperacf}")
 
     // Adventure
     compileOnly("net.kyori:adventure-text-minimessage:${adventure}")
@@ -34,6 +38,24 @@ dependencies {
     // Lombok
     compileOnly("org.projectlombok:lombok:${lombok}")
     annotationProcessor("org.projectlombok:lombok:${lombok}")
+}
+
+shadowJar {
+    relocate 'co.aikar.commands', 'org.notionsmp.notion.acf'
+    relocate 'co.aikar.locales', 'org.notionsmp.notion.locales'
+
+    minimize {
+        exclude(dependency('org.projectlombok:lombok:.*'))
+        exclude(dependency('net.kyori:adventure-text-minimessage:.*'))
+    }
+
+    exclude 'META-INF/*.SF'
+    exclude 'META-INF/*.DSA'
+    exclude 'META-INF/*.RSA'
+    exclude 'META-INF/LICENSE'
+    exclude 'META-INF/NOTICE'
+    exclude 'META-INF/maven/**'
+    exclude 'META-INF/MANIFEST.MF'
 }
 
 def targetJavaVersion = Integer.parseInt(project.targetJavaVersion)

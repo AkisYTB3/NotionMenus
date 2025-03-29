@@ -1,5 +1,6 @@
 package org.notionsmp.notionMenus;
 
+import co.aikar.commands.PaperCommandManager;
 import lombok.Getter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -11,6 +12,7 @@ import org.bukkit.command.TabCompleter;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.notionsmp.notionMenus.commands.GUICompletions;
 import org.notionsmp.notionMenus.commands.NotionMenusCommand;
 import org.notionsmp.notionMenus.gui.GuiManager;
 import org.notionsmp.notionMenus.listeners.GuiClickListener;
@@ -25,6 +27,7 @@ public class NotionMenus extends JavaPlugin {
     @Getter
     private static NotionMenus instance;
     private GuiManager guiManager;
+    private PaperCommandManager commandManager;
     private boolean isPAPILoaded;
     private Economy economy;
     private Permission permissions;
@@ -202,16 +205,9 @@ public class NotionMenus extends JavaPlugin {
     }
 
     private void registerCommands() {
-        registerCommand("notionmenus", new NotionMenusCommand(getGuiManager()));
-        registerCompleter("notionmenus", new NotionMenusCommand(getGuiManager()));
-    }
-
-    private void registerCommand(String name, CommandExecutor commandExecutor) {
-        Objects.requireNonNull(getCommand(name)).setExecutor(commandExecutor);
-    }
-
-    private void registerCompleter(String name, TabCompleter tabCompleter) {
-        Objects.requireNonNull(getCommand(name)).setTabCompleter(tabCompleter);
+        commandManager = new PaperCommandManager(this);
+        commandManager.registerCommand(new NotionMenusCommand());
+        commandManager.getCommandCompletions().registerCompletion("guis", new GUICompletions());
     }
 
     public void reload() {
