@@ -6,6 +6,7 @@ import com.google.gson.JsonParser;
 import org.bukkit.Bukkit;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.profile.PlayerTextures;
+import org.notionsmp.notionMenus.NotionMenus;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -15,12 +16,11 @@ import java.util.UUID;
 
 public class SkullUtil {
 
-    public static SkullMeta applyBase64Texture(SkullMeta meta, String base64) {
+    public static void applyBase64Texture(SkullMeta meta, String base64) {
         PlayerProfile profile = getProfileBase64(base64);
         if (profile != null) {
             meta.setPlayerProfile(profile);
         }
-        return meta;
     }
 
     private static PlayerProfile getProfileBase64(String base64) {
@@ -30,7 +30,7 @@ public class SkullUtil {
         try {
             urlObject = getUrlFromBase64(base64);
         } catch (MalformedURLException exception) {
-            Bukkit.getLogger().warning("Invalid base64 texture: " + base64);
+            NotionMenus.getInstance().getLogger().warning("Invalid base64 texture: " + base64);
             return null;
         }
         textures.setSkin(urlObject);
