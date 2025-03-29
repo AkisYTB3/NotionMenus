@@ -1,7 +1,6 @@
 package org.notionsmp.notionMenus.gui;
 
 import lombok.Getter;
-import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.ansi.ANSIComponentSerializer;
 import org.bukkit.Bukkit;

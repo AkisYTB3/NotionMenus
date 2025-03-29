@@ -10,16 +10,11 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.persistence.PersistentDataContainer;
-import org.bukkit.persistence.PersistentDataType;
 import org.notionsmp.notionMenus.NotionMenus;
 import org.notionsmp.notionMenus.gui.GuiConfig;
 import org.notionsmp.notionMenus.utils.ActionUtil;
 import org.notionsmp.notionMenus.utils.ConditionUtil;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
 import java.util.*;
 
 @RequiredArgsConstructor
