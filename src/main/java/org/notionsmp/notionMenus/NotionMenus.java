@@ -17,7 +17,6 @@ import org.notionsmp.notionMenus.listeners.GuiClickListener;
 import org.notionsmp.notionMenus.listeners.GuiCommandListener;
 import org.notionsmp.notionMenus.utils.DeluxeMenusConverter;
 
-
 @Getter
 public class NotionMenus extends JavaPlugin {
 
@@ -87,7 +86,6 @@ public class NotionMenus extends JavaPlugin {
 
     private boolean setupEconomy() {
         try {
-
             if (Bukkit.getPluginManager().getPlugin("Vault") == null) {
                 getLogger().warning("Vault plugin not found!");
                 return false;
@@ -111,7 +109,7 @@ public class NotionMenus extends JavaPlugin {
                     return true;
                 }
             } catch (ClassNotFoundException e) {
-
+                getLogger().info("VaultUnlocked economy class not found, using standard Vault");
             }
 
             getLogger().warning("Found Vault plugin but no economy service registered!");
@@ -127,18 +125,16 @@ public class NotionMenus extends JavaPlugin {
             RegisteredServiceProvider<Permission> rsp;
 
             if (isVaultUnlocked) {
-
                 try {
                     Class<?> v2PermissionClass = Class.forName("net.milkbowl.vault2.permission.Permission");
                     RegisteredServiceProvider<?> v2Rsp = getServer().getServicesManager().getRegistration(v2PermissionClass);
                     if (v2Rsp != null) {
-
                         permissions = (Permission) v2Rsp.getProvider();
                         getLogger().info("Hooked into VaultUnlocked permissions");
                         return;
                     }
                 } catch (ClassNotFoundException e) {
-
+                    getLogger().info("VaultUnlocked permissions class not found, using standard Vault");
                 }
             }
 
