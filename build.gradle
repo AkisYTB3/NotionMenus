@@ -46,7 +46,7 @@ shadowJar {
 
     minimize {
         exclude(dependency('org.projectlombok:lombok:.*'))
-        exclude(dependency('net.kyori:adventure-text-minimessage:.*'))
+        exclude(dependency('net.kyori:*'))
     }
 
     exclude 'META-INF/*.SF'
