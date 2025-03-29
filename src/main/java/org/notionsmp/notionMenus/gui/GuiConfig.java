@@ -1,12 +1,10 @@
 package org.notionsmp.notionMenus.gui;
 
 import lombok.Getter;
+import me.clip.placeholderapi.PlaceholderAPI;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import org.bukkit.Bukkit;
-import org.bukkit.Color;
-import org.bukkit.DyeColor;
-import org.bukkit.Material;
+import org.bukkit.*;
 import org.bukkit.block.banner.Pattern;
 import org.bukkit.block.banner.PatternType;
 import org.bukkit.configuration.ConfigurationSection;
@@ -15,7 +13,6 @@ import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.*;
-import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.notionsmp.notionMenus.NotionMenus;
@@ -27,7 +24,6 @@ import java.util.regex.Matcher;
 
 @Getter
 public class GuiConfig {
-
     private final String id;
     private final String title;
     private final int size;
@@ -43,14 +39,12 @@ public class GuiConfig {
         this.id = config.getString("id");
         this.title = config.getString("title");
         this.size = config.getInt("size", 54);
-
         if (config.isList("command")) {
             this.commands = config.getStringList("command");
         } else {
             String singleCommand = config.getString("command");
             this.commands = singleCommand != null ? Collections.singletonList(singleCommand) : Collections.emptyList();
         }
-
         ConfigurationSection openActionsSection = config.getConfigurationSection("open_actions");
         if (openActionsSection != null) {
             List<String> conditions = openActionsSection.getStringList("conditions");
@@ -60,12 +54,9 @@ public class GuiConfig {
         } else {
             this.openActions = new ClickAction(Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
         }
-
         this.openConditions = config.getStringList("open_conditions");
-
         this.itemConfigs = new HashMap<>();
         this.clickActions = new HashMap<>();
-
         if (Bukkit.getPluginManager().isPluginEnabled("Nexo")) {
             this.itemHooks.put("nexo", new NexoHook());
         }
@@ -74,7 +65,6 @@ public class GuiConfig {
         }
         this.itemHooks.put("basehead", new BaseheadHook());
         this.itemHooks.put("head", new HeadHook());
-
         ConfigurationSection itemsSection = config.getConfigurationSection("items");
         if (itemsSection != null) {
             for (String itemKey : itemsSection.getKeys(false)) {
@@ -89,12 +79,10 @@ public class GuiConfig {
     private void addItemToSlot(ConfigurationSection itemSection) {
         Object slotObject = itemSection.get("slot");
         if (slotObject == null) return;
-
         List<Integer> slots = parseSlots(slotObject);
         for (int slot : slots) {
             if (slot != -1) {
                 itemConfigs.computeIfAbsent(slot, k -> new ArrayList<>()).add(itemSection);
-
                 ConfigurationSection clickActionsSection = itemSection.getConfigurationSection("click_actions");
                 if (clickActionsSection != null) {
                     Map<String, ClickAction> actions = new HashMap<>();
@@ -112,7 +100,6 @@ public class GuiConfig {
 
     private List<Integer> parseSlots(Object slotObject) {
         List<Integer> slots = new ArrayList<>();
-
         if (slotObject instanceof Integer) {
             slots.add((Integer) slotObject);
         } else if (slotObject instanceof List) {
@@ -156,7 +143,6 @@ public class GuiConfig {
                 } catch (NumberFormatException ignored) {}
             }
         }
-
         return slots;
     }
 
@@ -165,19 +151,16 @@ public class GuiConfig {
         if (itemsForSlot == null || itemsForSlot.isEmpty()) {
             return new ItemStack(Material.AIR);
         }
-
         itemsForSlot.sort((item1, item2) -> {
             int priority1 = item1.getInt("priority", 0);
             int priority2 = item2.getInt("priority", 0);
             return Integer.compare(priority2, priority1);
         });
-
         for (ConfigurationSection itemSection : itemsForSlot) {
             if (checkViewConditions(itemSection.getStringList("view_conditions"), player)) {
                 return createItemFromConfig(itemSection, player);
             }
         }
-
         return new ItemStack(Material.AIR);
     }
 
@@ -188,26 +171,20 @@ public class GuiConfig {
                 return new ItemStack(Material.AIR);
             }
         }
-
         String materialName = itemSection.getString("material");
         Material material = Material.STONE;
-
         if (player != null && materialName != null) {
             materialName = replacePlaceholders(player, materialName);
         }
-
         ItemStack item = null;
-
         if (materialName != null && materialName.contains("-")) {
             String[] parts = materialName.split("-", 2);
             String hookPrefix = parts[0];
             String hookId = parts[1];
-
             if (itemHooks.containsKey(hookPrefix)) {
                 item = itemHooks.get(hookPrefix).getItem(hookId, player);
             }
         }
-
         if (item == null && materialName != null) {
             switch (materialName.toLowerCase()) {
                 case "empty":
@@ -297,16 +274,13 @@ public class GuiConfig {
                     break;
             }
         }
-
         if (item == null || item.getType() == Material.AIR) {
             return item != null ? item : new ItemStack(Material.AIR);
         }
-
         ItemMeta meta = item.getItemMeta();
         if (meta == null) {
             meta = Bukkit.getItemFactory().getItemMeta(item.getType());
         }
-
         if (itemSection.contains("itemname")) {
             String itemName = itemSection.getString("itemname");
             if (player != null && itemName != null) {
@@ -316,11 +290,9 @@ public class GuiConfig {
                 meta.displayName(MiniMessage.miniMessage().deserialize(itemName));
             }
         }
-
         if (itemSection.contains("custom_model_data")) {
             meta.setCustomModelData(itemSection.getInt("custom_model_data"));
         }
-
         if (itemSection.contains("lore")) {
             List<Component> lore = new ArrayList<>();
             for (String line : itemSection.getStringList("lore")) {
@@ -333,7 +305,6 @@ public class GuiConfig {
             }
             meta.lore(lore);
         }
-
         if (itemSection.contains("item_flags")) {
             for (String flag : itemSection.getStringList("item_flags")) {
                 try {
@@ -341,7 +312,6 @@ public class GuiConfig {
                 } catch (IllegalArgumentException ignored) {}
             }
         }
-
         if (itemSection.contains("enchantments")) {
             ConfigurationSection enchantmentsSection = itemSection.getConfigurationSection("enchantments");
             if (enchantmentsSection != null) {
@@ -354,7 +324,6 @@ public class GuiConfig {
                 }
             }
         }
-
         if (itemSection.contains("amount")) {
             String amount = itemSection.getString("amount");
             if (amount != null) {
@@ -372,7 +341,6 @@ public class GuiConfig {
                 }
             }
         }
-
         if (itemSection.contains("color")) {
             String color = itemSection.getString("color");
             if (color != null) {
@@ -405,7 +373,6 @@ public class GuiConfig {
                 }
             }
         }
-
         if (itemSection.contains("banner_meta")) {
             if (meta instanceof BannerMeta bannerMeta) {
                 List<String> patterns = itemSection.getStringList("banner_meta");
@@ -425,7 +392,6 @@ public class GuiConfig {
                 }
             }
         }
-
         if (material == Material.SHIELD && itemSection.contains("base_color")) {
             if (meta instanceof ShieldMeta shieldMeta) {
                 String baseColor = itemSection.getString("base_color");
@@ -437,7 +403,6 @@ public class GuiConfig {
                 }
             }
         }
-
         if ((material == Material.POTION ||
                 material == Material.SPLASH_POTION ||
                 material == Material.TIPPED_ARROW ||
@@ -462,81 +427,16 @@ public class GuiConfig {
                 }
             }
         }
-
         item.setItemMeta(meta);
         return item;
     }
 
     private boolean checkViewConditions(List<String> viewConditions, Player player) {
-        if (viewConditions == null || viewConditions.isEmpty()) {
-            return true;
-        }
+        return ConditionUtil.checkConditions(viewConditions, player);
+    }
 
-        for (String condition : viewConditions) {
-            if (condition == null) continue;
-
-            String[] parts = condition.split("\\[|\\]");
-            if (parts.length < 2) continue;
-
-            String conditionType = parts[1];
-            String conditionValue = condition.substring(conditionType.length() + 2).trim();
-
-            int amount;
-            switch (conditionType) {
-                case "money":
-                    amount = Integer.parseInt(conditionValue);
-                    if (!ConditionUtil.checkMoneyCondition(player, amount)) return false;
-                    break;
-                case "!money":
-                    amount = Integer.parseInt(conditionValue);
-                    if (ConditionUtil.checkMoneyCondition(player, amount)) return false;
-                    break;
-                case "item":
-                    if (!ConditionUtil.checkItemCondition(player, condition)) return false;
-                    break;
-                case "!item":
-                    if (ConditionUtil.checkItemCondition(player, condition)) return false;
-                    break;
-                case "meta":
-                    if (!ConditionUtil.checkMetaCondition(player, condition)) return false;
-                    break;
-                case "!meta":
-                    if (ConditionUtil.checkMetaCondition(player, condition)) return false;
-                    break;
-                case "near":
-                    if (!ConditionUtil.checkNearCondition(player, condition)) return false;
-                    break;
-                case "!near":
-                    if (ConditionUtil.checkNearCondition(player, condition)) return false;
-                    break;
-                case "equals":
-                    if (!ConditionUtil.checkEqualsCondition(condition)) return false;
-                    break;
-                case "!equals":
-                    if (ConditionUtil.checkEqualsCondition(condition)) return false;
-                    break;
-                case "contains":
-                    if (!ConditionUtil.checkContainsCondition(condition)) return false;
-                    break;
-                case "!contains":
-                    if (ConditionUtil.checkContainsCondition(condition)) return false;
-                    break;
-                case "regex":
-                    if (!ConditionUtil.checkRegexCondition(condition)) return false;
-                    break;
-                case "!regex":
-                    if (ConditionUtil.checkRegexCondition(condition)) return false;
-                    break;
-                case "compare":
-                    if (!ConditionUtil.checkCompareCondition(condition)) return false;
-                    break;
-                case "!compare":
-                    if (ConditionUtil.checkCompareCondition(condition)) return false;
-                    break;
-            }
-        }
-
-        return true;
+    public boolean canPlayerOpen(Player player) {
+        return ConditionUtil.checkConditions(openConditions, player);
     }
 
     public Map<String, ClickAction> getClickActions(int slot, Player player) {
@@ -544,23 +444,18 @@ public class GuiConfig {
         if (itemSection == null) {
             return new HashMap<>();
         }
-
         Map<String, ClickAction> actions = clickActions.getOrDefault(slot, new HashMap<>());
         if (actions.containsKey("any")) {
             Map<String, ClickAction> mergedActions = new HashMap<>();
             ClickAction anyAction = actions.get("any");
-
             for (Map.Entry<String, ClickAction> entry : actions.entrySet()) {
                 if (!entry.getKey().equals("any")) {
                     List<String> mergedConditions = new ArrayList<>(anyAction.conditions());
                     mergedConditions.addAll(entry.getValue().conditions());
-
                     List<String> mergedActionsList = new ArrayList<>(anyAction.actions());
                     mergedActionsList.addAll(entry.getValue().actions());
-
                     List<String> mergedDenyActions = new ArrayList<>(anyAction.denyActions());
                     mergedDenyActions.addAll(entry.getValue().denyActions());
-
                     mergedActions.put(entry.getKey(),
                             new ClickAction(mergedConditions, mergedActionsList, mergedDenyActions));
                 }
@@ -568,7 +463,6 @@ public class GuiConfig {
             mergedActions.put("any", anyAction);
             return mergedActions;
         }
-
         return actions;
     }
 
@@ -577,19 +471,16 @@ public class GuiConfig {
         if (itemsForSlot == null || itemsForSlot.isEmpty()) {
             return null;
         }
-
         itemsForSlot.sort((item1, item2) -> {
             int priority1 = item1.getInt("priority", 0);
             int priority2 = item2.getInt("priority", 0);
             return Integer.compare(priority2, priority1);
         });
-
         for (ConfigurationSection itemSection : itemsForSlot) {
             if (checkViewConditions(itemSection.getStringList("view_conditions"), player)) {
                 return itemSection;
             }
         }
-
         return null;
     }
 
@@ -604,7 +495,6 @@ public class GuiConfig {
         if (player == null || text == null) {
             return text;
         }
-
         java.util.regex.Pattern randomPattern = java.util.regex.Pattern.compile("<random:(-?\\d+),(-?\\d+)>");
         Matcher randomMatcher = randomPattern.matcher(text);
         while (randomMatcher.find()) {
@@ -613,7 +503,6 @@ public class GuiConfig {
             int randomNum = random.nextInt(max - min + 1) + min;
             text = text.replace(randomMatcher.group(0), String.valueOf(randomNum));
         }
-
         return text.replace("<player>", player.getName())
                 .replace("<location>", player.getLocation().toString())
                 .replace("<playerX>", String.valueOf(player.getLocation().getX()))
