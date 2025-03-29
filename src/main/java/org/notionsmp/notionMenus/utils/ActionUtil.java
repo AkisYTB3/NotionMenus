@@ -42,7 +42,7 @@ public class ActionUtil {
             }
         } catch (Exception e) {
             NotionMenus.getInstance().getLogger().warning("Failed to execute action: " + action);
-            e.printStackTrace();
+            NotionMenus.getInstance().getLogger().warning(e.getMessage());
         }
     }
 
@@ -200,16 +200,16 @@ public class ActionUtil {
     }
 
     private static void refreshPlayerGui(Player player) {
-        if (player.getOpenInventory() == null) return;
+        player.getOpenInventory();
 
-        String title = player.getOpenInventory().getTitle();
+        Component title = player.getOpenInventory().title();
         GuiManager guiManager = NotionMenus.getInstance().getGuiManager();
 
         for (GuiConfig guiConfig : guiManager.getGuis().values()) {
             String parsedTitle = GuiConfig.parsePlaceholders(player, guiConfig.getTitle());
             Component parsedTitleComponent = MiniMessage.miniMessage().deserialize(parsedTitle);
 
-            if (title.equals(parsedTitleComponent.toString())) {
+            if (title.equals(parsedTitleComponent)) {
                 guiManager.openGui(guiConfig.getId(), player);
                 break;
             }
@@ -293,7 +293,7 @@ public class ActionUtil {
             }
         } catch (Exception e) {
             if (broadcast) {
-                Bukkit.getLogger().warning("Invalid JSON broadcast message format");
+                NotionMenus.getInstance().getLogger().warning("Invalid JSON broadcast message format");
             } else {
                 player.sendMessage(MiniMessage.miniMessage().deserialize("<red>Invalid JSON message format"));
             }
@@ -315,6 +315,7 @@ public class ActionUtil {
         try {
             switch (operation) {
                 case "set":
+                    if (value == null) return;
                     switch (type) {
                         case "string":
                             container.set(namespacedKey, PersistentDataType.STRING, value);
@@ -340,6 +341,7 @@ public class ActionUtil {
                     container.remove(namespacedKey);
                     break;
                 case "add":
+                    if (value == null) return;
                     switch (type) {
                         case "int":
                             int currentInt = container.getOrDefault(namespacedKey, PersistentDataType.INTEGER, 0);
@@ -360,6 +362,7 @@ public class ActionUtil {
                     }
                     break;
                 case "subtract":
+                    if (value == null) return;
                     switch (type) {
                         case "int":
                             int currentInt = container.getOrDefault(namespacedKey, PersistentDataType.INTEGER, 0);
@@ -388,7 +391,7 @@ public class ActionUtil {
             }
         } catch (Exception e) {
             NotionMenus.getInstance().getLogger().warning("Failed to execute meta action: " + metaAction);
-            e.printStackTrace();
+            NotionMenus.getInstance().getLogger().warning(e.getMessage());
         }
     }
 
@@ -400,21 +403,12 @@ public class ActionUtil {
             out.writeUTF(server);
         } catch (Exception e) {
             NotionMenus.getInstance().getLogger().warning("There was a problem attempting to send " + p.getName() + " to server " + server + "!");
-            e.printStackTrace();
+            NotionMenus.getInstance().getLogger().warning(e.getMessage());
         }
 
         p.sendPluginMessage(NotionMenus.getInstance(), "BungeeCord", out.toByteArray());
     }
 
-    private static class ParsedAction {
-        public final String cleanAction;
-        public final int chance;
-        public final int delay;
-
-        public ParsedAction(String cleanAction, int chance, int delay) {
-            this.cleanAction = cleanAction;
-            this.chance = chance;
-            this.delay = delay;
-        }
+    private record ParsedAction(String cleanAction, int chance, int delay) {
     }
 }
