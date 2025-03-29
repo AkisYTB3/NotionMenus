@@ -347,8 +347,34 @@ public class DeluxeMenusConverter {
     private String convertLegacyColors(String text) {
         if (text == null) return null;
 
-        return text.replaceAll("(?i)&([0-9a-fk-or])", "<$1>")
-                .replaceAll("(?i)&#([0-9a-f]{6})", "<#$1>");
+        String result = text;
+
+        result = result.replaceAll("(?i)&0", "<black>")
+                .replaceAll("(?i)&1", "<dark_blue>")
+                .replaceAll("(?i)&2", "<dark_green>")
+                .replaceAll("(?i)&3", "<dark_aqua>")
+                .replaceAll("(?i)&4", "<dark_red>")
+                .replaceAll("(?i)&5", "<dark_purple>")
+                .replaceAll("(?i)&6", "<gold>")
+                .replaceAll("(?i)&7", "<gray>")
+                .replaceAll("(?i)&8", "<dark_gray>")
+                .replaceAll("(?i)&9", "<blue>")
+                .replaceAll("(?i)&a", "<green>")
+                .replaceAll("(?i)&b", "<aqua>")
+                .replaceAll("(?i)&c", "<red>")
+                .replaceAll("(?i)&d", "<light_purple>")
+                .replaceAll("(?i)&e", "<yellow>")
+                .replaceAll("(?i)&f", "<white>")
+                .replaceAll("(?i)&k", "<obf>")
+                .replaceAll("(?i)&l", "<b>")
+                .replaceAll("(?i)&m", "<st>")
+                .replaceAll("(?i)&n", "<u>")
+                .replaceAll("(?i)&o", "<i>")
+                .replaceAll("(?i)&r", "<r>");
+
+        result = result.replaceAll("(?i)&#([0-9a-f]{6})", "<#$1>");
+
+        return result;
     }
 
     private Object convertSlots(Object slots) {
