@@ -475,7 +475,7 @@ public class GuiConfig {
         for (String condition : viewConditions) {
             if (condition == null) continue;
 
-            String[] parts = condition.split("[\\[\\]]");
+            String[] parts = condition.split("\\[|\\]");
             if (parts.length < 2) continue;
 
             String conditionType = parts[1];
