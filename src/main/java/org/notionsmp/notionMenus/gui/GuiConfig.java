@@ -119,8 +119,7 @@ public class GuiConfig {
             for (Object entry : (List<?>) slotObject) {
                 if (entry instanceof Integer) {
                     slots.add((Integer) entry);
-                } else if (entry instanceof String) {
-                    String range = (String) entry;
+                } else if (entry instanceof String range) {
                     if (range.contains("..")) {
                         String[] parts = range.split("\\.\\.");
                         if (parts.length == 2) {
@@ -139,8 +138,7 @@ public class GuiConfig {
                     }
                 }
             }
-        } else if (slotObject instanceof String) {
-            String range = (String) slotObject;
+        } else if (slotObject instanceof String range) {
             if (range.contains("..")) {
                 String[] parts = range.split("\\.\\.");
                 if (parts.length == 2) {
@@ -194,7 +192,7 @@ public class GuiConfig {
         String materialName = itemSection.getString("material");
         Material material = Material.STONE;
 
-        if (player != null) {
+        if (player != null && materialName != null) {
             materialName = replacePlaceholders(player, materialName);
         }
 
@@ -210,7 +208,7 @@ public class GuiConfig {
             }
         }
 
-        if (item == null) {
+        if (item == null && materialName != null) {
             switch (materialName.toLowerCase()) {
                 case "empty":
                     material = Material.AIR;
@@ -219,7 +217,7 @@ public class GuiConfig {
                 case "offhand":
                     if (player != null) {
                         item = player.getInventory().getItemInOffHand();
-                        if (item == null || item.getType() == Material.AIR) {
+                        if (item.getType() == Material.AIR) {
                             item = new ItemStack(Material.AIR);
                         } else {
                             item = item.clone();
@@ -231,7 +229,7 @@ public class GuiConfig {
                 case "mainhand":
                     if (player != null) {
                         item = player.getInventory().getItemInMainHand();
-                        if (item == null || item.getType() == Material.AIR) {
+                        if (item.getType() == Material.AIR) {
                             item = new ItemStack(Material.AIR);
                         } else {
                             item = item.clone();
@@ -300,8 +298,8 @@ public class GuiConfig {
             }
         }
 
-        if (item.getType() == Material.AIR) {
-            return item;
+        if (item == null || item.getType() == Material.AIR) {
+            return item != null ? item : new ItemStack(Material.AIR);
         }
 
         ItemMeta meta = item.getItemMeta();
@@ -311,10 +309,12 @@ public class GuiConfig {
 
         if (itemSection.contains("itemname")) {
             String itemName = itemSection.getString("itemname");
-            if (player != null) {
+            if (player != null && itemName != null) {
                 itemName = replacePlaceholders(player, itemName);
             }
-            meta.displayName(MiniMessage.miniMessage().deserialize(itemName));
+            if (itemName != null) {
+                meta.displayName(MiniMessage.miniMessage().deserialize(itemName));
+            }
         }
 
         if (itemSection.contains("custom_model_data")) {
@@ -324,10 +324,12 @@ public class GuiConfig {
         if (itemSection.contains("lore")) {
             List<Component> lore = new ArrayList<>();
             for (String line : itemSection.getStringList("lore")) {
-                if (player != null) {
+                if (player != null && line != null) {
                     line = replacePlaceholders(player, line);
                 }
-                lore.add(MiniMessage.miniMessage().deserialize(line));
+                if (line != null) {
+                    lore.add(MiniMessage.miniMessage().deserialize(line));
+                }
             }
             meta.lore(lore);
         }
@@ -408,11 +410,17 @@ public class GuiConfig {
             if (meta instanceof BannerMeta bannerMeta) {
                 List<String> patterns = itemSection.getStringList("banner_meta");
                 for (String pattern : patterns) {
-                    String[] parts = pattern.split(";");
-                    if (parts.length == 2) {
-                        DyeColor dyeColor = DyeColor.valueOf(parts[0].toUpperCase());
-                        PatternType patternType = PatternType.valueOf(parts[1].toUpperCase());
-                        bannerMeta.addPattern(new Pattern(dyeColor, patternType));
+                    if (pattern != null) {
+                        String[] parts = pattern.split(";");
+                        if (parts.length == 2) {
+                            try {
+                                DyeColor dyeColor = DyeColor.valueOf(parts[0].toUpperCase());
+                                PatternType patternType = Bukkit.getRegistry(PatternType.class).get(org.bukkit.NamespacedKey.minecraft(parts[1].toLowerCase()));
+                                if (patternType != null) {
+                                    bannerMeta.addPattern(new Pattern(dyeColor, patternType));
+                                }
+                            } catch (IllegalArgumentException ignored) {}
+                        }
                     }
                 }
             }
@@ -438,16 +446,18 @@ public class GuiConfig {
             if (meta instanceof PotionMeta potionMeta) {
                 List<String> potionEffects = itemSection.getStringList("potion_effects");
                 for (String effect : potionEffects) {
-                    String[] parts = effect.split(";");
-                    if (parts.length == 3) {
-                        try {
-                            PotionEffectType effectType = PotionEffectType.getByName(parts[0].toUpperCase());
-                            if (effectType != null) {
-                                int duration = Integer.parseInt(parts[1]);
-                                int amplifier = Integer.parseInt(parts[2]);
-                                potionMeta.addCustomEffect(new PotionEffect(effectType, duration, amplifier), true);
-                            }
-                        } catch (NumberFormatException ignored) {}
+                    if (effect != null) {
+                        String[] parts = effect.split(";");
+                        if (parts.length == 3) {
+                            try {
+                                PotionEffectType effectType = PotionEffectType.getByName(parts[0].toUpperCase());
+                                if (effectType != null) {
+                                    int duration = Integer.parseInt(parts[1]);
+                                    int amplifier = Integer.parseInt(parts[2]);
+                                    potionMeta.addCustomEffect(new PotionEffect(effectType, duration, amplifier), true);
+                                }
+                            } catch (NumberFormatException ignored) {}
+                        }
                     }
                 }
             }
@@ -463,15 +473,18 @@ public class GuiConfig {
         }
 
         for (String condition : viewConditions) {
+            if (condition == null) continue;
+
             String[] parts = condition.split("\\[|\\]");
             if (parts.length < 2) continue;
 
             String conditionType = parts[1];
             String conditionValue = condition.substring(conditionType.length() + 2).trim();
 
+            int amount;
             switch (conditionType) {
                 case "money":
-                    int amount = Integer.parseInt(conditionValue);
+                    amount = Integer.parseInt(conditionValue);
                     if (!ConditionUtil.checkMoneyCondition(player, amount)) return false;
                     break;
                 case "!money":
@@ -580,11 +593,7 @@ public class GuiConfig {
         return null;
     }
 
-    public record ClickAction(List<String> conditions, List<String> actions, List<String> denyActions) {
-        public ClickAction(List<String> conditions, List<String> actions) {
-            this(conditions, actions, Collections.emptyList());
-        }
-    }
+    public record ClickAction(List<String> conditions, List<String> actions, List<String> denyActions) {}
 
     public static String parsePlaceholders(Player player, String text) {
         if (NotionMenus.getInstance().isPAPILoaded()) return PlaceholderAPI.setPlaceholders(player, text);
@@ -592,7 +601,7 @@ public class GuiConfig {
     }
 
     public static String replacePlaceholders(Player player, String text) {
-        if (player == null) {
+        if (player == null || text == null) {
             return text;
         }
 
