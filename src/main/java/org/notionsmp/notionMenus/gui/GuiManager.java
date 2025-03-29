@@ -109,7 +109,7 @@ public class GuiManager {
         if (conditions == null || conditions.isEmpty()) return true;
 
         for (String condition : conditions) {
-            String[] parts = condition.split("\\[|\\]");
+            String[] parts = condition.split("[\\[\\]]");
             if (parts.length < 2) continue;
 
             String conditionType = parts[1];
