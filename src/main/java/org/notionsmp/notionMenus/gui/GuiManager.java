@@ -13,6 +13,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.notionsmp.notionMenus.NotionMenus;
 import org.notionsmp.notionMenus.utils.ActionUtil;
+import org.notionsmp.notionMenus.utils.ConditionUtil;
 
 import java.io.File;
 import java.util.HashMap;
@@ -78,7 +79,6 @@ public class GuiManager {
             return;
         }
         if (!guiConfig.canPlayerOpen(player)) {
-            executeActions(guiConfig.getOpenActions(), player, false);
             return;
         }
         String title = GuiConfig.replacePlaceholders(player,
@@ -93,7 +93,11 @@ public class GuiManager {
             }
         }
         player.openInventory(gui);
-        executeActions(guiConfig.getOpenActions(), player, true);
+        if (ConditionUtil.checkConditions(guiConfig.getOpenActions().conditions(), player)) {
+            executeActions(guiConfig.getOpenActions(), player, true);
+        } else {
+            executeActions(guiConfig.getOpenActions(), player, false);
+        }
     }
 
     private void executeActions(GuiConfig.ClickAction clickAction, Player player, boolean shouldExecuteActions) {
