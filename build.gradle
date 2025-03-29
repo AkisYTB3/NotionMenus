@@ -41,8 +41,8 @@ dependencies {
 }
 
 shadowJar {
-    relocate 'co.aikar.commands', 'org.notionsmp.notion.acf'
-    relocate 'co.aikar.locales', 'org.notionsmp.notion.locales'
+    relocate 'co.aikar.commands', 'org.notionsmp.notionMenus.acf'
+    relocate 'co.aikar.locales', 'org.notionsmp.notionMenus.locales'
 
     minimize {
         exclude(dependency('org.projectlombok:lombok:.*'))
@@ -84,3 +84,5 @@ processResources {
         expand props
     }
 }
+
+jar.dependsOn(shadowJar)
