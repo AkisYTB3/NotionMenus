@@ -333,7 +333,7 @@ public class DeluxeMenusConverter {
     private String convertSoundAction(String action) {
         String sound = action.substring(7).trim();
         return "[sound] " + sound.toLowerCase().replace("_", ".") +
-                "# Note: Some sounds like smithing_table may need manual correction";
+                " # Note: Some sounds like smithing_table may need manual correction";
     }
 
     private List<String> convertStringList(List<String> list) {
