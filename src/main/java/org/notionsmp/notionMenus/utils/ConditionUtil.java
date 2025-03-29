@@ -1,11 +1,13 @@
 package org.notionsmp.notionMenus.utils;
 
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.notionsmp.notionMenus.NotionMenus;
@@ -32,15 +34,24 @@ public class ConditionUtil {
                     case "0b" -> false;
                     default -> throw new IllegalArgumentException("Invalid boolean value: " + value);
                 };
-                yield pdc.get(namespacedKey, PersistentDataType.BYTE) == (byte) (expected ? 1 : 0);
+                Byte byteValue = pdc.get(namespacedKey, PersistentDataType.BYTE);
+                yield byteValue != null && byteValue == (byte) (expected ? 1 : 0);
             }
-            case 'l' -> pdc.get(namespacedKey, PersistentDataType.LONG) >= Long.parseLong(value.substring(0, value.length() - 1));
-            case 'd' -> pdc.get(namespacedKey, PersistentDataType.DOUBLE) >= Double.parseDouble(value.substring(0, value.length() - 1));
+            case 'l' -> {
+                Long longValue = pdc.get(namespacedKey, PersistentDataType.LONG);
+                yield longValue != null && longValue >= Long.parseLong(value.substring(0, value.length() - 1));
+            }
+            case 'd' -> {
+                Double doubleValue = pdc.get(namespacedKey, PersistentDataType.DOUBLE);
+                yield doubleValue != null && doubleValue >= Double.parseDouble(value.substring(0, value.length() - 1));
+            }
             default -> {
                 if (value.contains(".")) {
-                    yield pdc.get(namespacedKey, PersistentDataType.DOUBLE) >= Double.parseDouble(value);
+                    Double doubleValue = pdc.get(namespacedKey, PersistentDataType.DOUBLE);
+                    yield doubleValue != null && doubleValue >= Double.parseDouble(value);
                 } else {
-                    yield pdc.get(namespacedKey, PersistentDataType.INTEGER) >= Integer.parseInt(value);
+                    Integer intValue = pdc.get(namespacedKey, PersistentDataType.INTEGER);
+                    yield intValue != null && intValue >= Integer.parseInt(value);
                 }
             }
         };
@@ -116,8 +127,7 @@ public class ConditionUtil {
     public static boolean checkMoneyCondition(Player player, int amount) {
         NotionMenus plugin = NotionMenus.getInstance();
         if (!plugin.isVaultEnabled() || plugin.getEconomy() == null) {
-            player.sendMessage(MiniMessage.miniMessage().deserialize(
-                    "<red>Vault is not installed. Money-related features are disabled."));
+            player.sendMessage(MiniMessage.miniMessage().deserialize("<red>Vault is not installed. Money-related features are disabled."));
             return false;
         }
         return plugin.getEconomy().has(player, amount);
@@ -157,10 +167,8 @@ public class ConditionUtil {
 
     private static List<String> parseLore(String loreString) {
         if (loreString == null) return Collections.emptyList();
-
         loreString = loreString.replace("[", "").replace("]", "").trim();
         if (loreString.isEmpty()) return Collections.emptyList();
-
         return Arrays.stream(loreString.split(","))
                 .map(line -> line.trim().replace("\"", ""))
                 .toList();
@@ -170,7 +178,6 @@ public class ConditionUtil {
                                                int amount, String itemName, List<String> lore, boolean nameContains,
                                                boolean nameIgnoreCase, boolean loreContains, boolean loreIgnoreCase,
                                                boolean strict, boolean armor, boolean offhand) {
-
         if (checkItems(player.getInventory().getContents(), material, customModelData, amount,
                 itemName, lore, nameContains, nameIgnoreCase, loreContains,
                 loreIgnoreCase, strict)) {
@@ -185,7 +192,7 @@ public class ConditionUtil {
 
         if (offhand) {
             ItemStack offhandItem = player.getInventory().getItemInOffHand();
-            return offhandItem != null && matchesItem(offhandItem, customModelData, amount,
+            return matchesItem(offhandItem, customModelData, amount,
                     itemName, lore, nameContains, nameIgnoreCase, loreContains,
                     loreIgnoreCase, strict);
         }
@@ -197,7 +204,6 @@ public class ConditionUtil {
                                       int amount, String itemName, List<String> lore, boolean nameContains,
                                       boolean nameIgnoreCase, boolean loreContains, boolean loreIgnoreCase,
                                       boolean strict) {
-
         for (ItemStack item : items) {
             if (item != null && item.getType() == material &&
                     matchesItem(item, customModelData, amount, itemName, lore,
@@ -212,11 +218,11 @@ public class ConditionUtil {
                                        String itemName, List<String> lore, boolean nameContains,
                                        boolean nameIgnoreCase, boolean loreContains, boolean loreIgnoreCase,
                                        boolean strict) {
-
         if (item == null) return false;
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) return false;
 
-        if (strict && (item.getItemMeta().hasCustomModelData() ||
-                item.getItemMeta().hasDisplayName() || item.getItemMeta().hasLore())) {
+        if (strict && (meta.hasCustomModelData() || meta.hasDisplayName() || meta.hasLore())) {
             return false;
         }
 
@@ -224,8 +230,8 @@ public class ConditionUtil {
             return false;
         }
 
-        if (customModelData != -1 && item.getItemMeta().hasCustomModelData() &&
-                item.getItemMeta().getCustomModelData() != customModelData) {
+        if (customModelData != -1 && meta.hasCustomModelData() &&
+                meta.getCustomModelData() != customModelData) {
             return false;
         }
 
@@ -238,44 +244,40 @@ public class ConditionUtil {
 
     private static boolean matchesName(ItemStack item, String itemName,
                                        boolean nameContains, boolean nameIgnoreCase) {
-        if (!item.getItemMeta().hasDisplayName()) return false;
+        if (item == null || !item.hasItemMeta()) return false;
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null || !meta.hasDisplayName()) return false;
 
-        String displayName = item.getItemMeta().getDisplayName();
-        if (nameContains) {
-            return nameIgnoreCase ?
-                    displayName.toLowerCase().contains(itemName.toLowerCase()) :
-                    displayName.contains(itemName);
-        } else {
-            return nameIgnoreCase ?
-                    displayName.equalsIgnoreCase(itemName) :
-                    displayName.equals(itemName);
-        }
+        Component displayName = meta.displayName();
+        String displayString = MiniMessage.miniMessage().serialize(displayName);
+        String compareName = nameIgnoreCase ? itemName.toLowerCase() : itemName;
+        String compareDisplay = nameIgnoreCase ? displayString.toLowerCase() : displayString;
+
+        return nameContains ? compareDisplay.contains(compareName) : compareDisplay.equals(compareName);
     }
 
     private static boolean matchesLore(ItemStack item, List<String> lore,
                                        boolean loreContains, boolean loreIgnoreCase) {
-        if (!item.getItemMeta().hasLore()) return false;
+        if (item == null || !item.hasItemMeta()) return false;
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null || !meta.hasLore()) return false;
 
-        List<String> itemLore = item.getItemMeta().getLore();
+        List<Component> itemLoreComponents = meta.lore();
+        if (itemLoreComponents == null) return false;
+
+        List<String> itemLore = itemLoreComponents.stream()
+                .map(component -> MiniMessage.miniMessage().serialize(component))
+                .toList();
+
         for (String loreLine : lore) {
             boolean found = false;
             for (String itemLoreLine : itemLore) {
-                if (loreContains) {
-                    if (loreIgnoreCase && itemLoreLine.toLowerCase().contains(loreLine.toLowerCase())) {
-                        found = true;
-                        break;
-                    } else if (itemLoreLine.contains(loreLine)) {
-                        found = true;
-                        break;
-                    }
-                } else {
-                    if (loreIgnoreCase && itemLoreLine.equalsIgnoreCase(loreLine)) {
-                        found = true;
-                        break;
-                    } else if (itemLoreLine.equals(loreLine)) {
-                        found = true;
-                        break;
-                    }
+                String compareLore = loreIgnoreCase ? loreLine.toLowerCase() : loreLine;
+                String compareItemLore = loreIgnoreCase ? itemLoreLine.toLowerCase() : itemLoreLine;
+
+                if (loreContains ? compareItemLore.contains(compareLore) : compareItemLore.equals(compareLore)) {
+                    found = true;
+                    break;
                 }
             }
             if (!found) {
