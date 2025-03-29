@@ -1,0 +1,17 @@
+name: NotionMenus
+version: ${version}
+main: org.notionsmp.notionMenus.NotionMenus
+api-version: '1.21'
+load: STARTUP
+author: "Akis (discord: yeahakis)"
+softdepend:
+  - Nexo
+  - PlaceholderAPI
+  - ItemsAdder
+  - Vault
+commands:
+  notionmenus:
+    aliases:
+      - nm
+      - notion
+      - nmenus
