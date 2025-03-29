@@ -7,8 +7,6 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.permission.Permission;
 import org.bukkit.Bukkit;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.TabCompleter;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -19,7 +17,6 @@ import org.notionsmp.notionMenus.listeners.GuiClickListener;
 import org.notionsmp.notionMenus.listeners.GuiCommandListener;
 import org.notionsmp.notionMenus.utils.DeluxeMenusConverter;
 
-import java.util.Objects;
 
 @Getter
 public class NotionMenus extends JavaPlugin {
