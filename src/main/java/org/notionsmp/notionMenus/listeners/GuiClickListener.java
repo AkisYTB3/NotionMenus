@@ -136,16 +136,4 @@ public class GuiClickListener implements Listener {
 
         return true;
     }
-
-    private String replacePlaceholders(Player player, String text, InventoryClickEvent event) {
-        return text.replace("<player>", player.getName())
-                .replace("<location>", player.getLocation().toString())
-                .replace("<playerX>", String.valueOf(player.getLocation().getX()))
-                .replace("<playerY>", String.valueOf(player.getLocation().getY()))
-                .replace("<playerZ>", String.valueOf(player.getLocation().getZ()))
-                .replace("<player_health>", String.valueOf(player.getHealth()))
-                .replace("<player_food>", String.valueOf(player.getFoodLevel()))
-                .replace("<slot_clicked>", String.valueOf(event.getSlot()))
-                .replace("<raw_slot_clicked>", String.valueOf(event.getRawSlot()));
-    }
 }
