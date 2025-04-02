@@ -57,12 +57,10 @@ public class GuiConfig {
         this.openConditions = config.getStringList("open_conditions");
         this.itemConfigs = new HashMap<>();
         this.clickActions = new HashMap<>();
-        if (Bukkit.getPluginManager().isPluginEnabled("Nexo")) {
-            this.itemHooks.put("nexo", new NexoHook());
-        }
-        if (Bukkit.getPluginManager().isPluginEnabled("ItemsAdder")) {
-            this.itemHooks.put("itemsadder", new ItemsAdderHook());
-        }
+
+        addHookIfPluginPresent("nexo", new NexoHook(), "Nexo");
+        addHookIfPluginPresent("itemsadder", new ItemsAdderHook(), "ItemsAdder");
+
         this.itemHooks.put("basehead", new BaseheadHook());
         this.itemHooks.put("head", new HeadHook());
         ConfigurationSection itemsSection = config.getConfigurationSection("items");
@@ -74,6 +72,10 @@ public class GuiConfig {
                 }
             }
         }
+    }
+
+    private void addHookIfPluginPresent(String id, ItemHook hook, String plugin) {
+        if(Bukkit.getPluginManager().isPluginEnabled(plugin)) this.itemHooks.put(id, hook);
     }
 
     private void addItemToSlot(ConfigurationSection itemSection) {
