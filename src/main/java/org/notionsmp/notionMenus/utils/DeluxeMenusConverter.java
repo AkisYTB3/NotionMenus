@@ -323,8 +323,8 @@ public class DeluxeMenusConverter {
             default -> action;
         };
 
-        if (converted.contains(" dm open ")) {
-            converted = converted.replace(" dm open ", " nm gui ");
+        if (converted.contains("dm open ")) {
+            converted = converted.replace("dm open ", "nm gui ");
         }
 
         return convertLegacyColors(converted);
