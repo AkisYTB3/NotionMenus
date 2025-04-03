@@ -509,6 +509,7 @@ public class GuiConfig {
             int randomNum = random.nextInt(max - min + 1) + min;
             text = text.replace(randomMatcher.group(0), String.valueOf(randomNum));
         }
+        text = parsePlaceholders(player, text);
         return text.replace("<player>", player.getName())
                 .replace("<location>", player.getLocation().toString())
                 .replace("<playerX>", String.valueOf(player.getLocation().getX()))
