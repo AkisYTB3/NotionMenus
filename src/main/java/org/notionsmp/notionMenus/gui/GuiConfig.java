@@ -501,6 +501,9 @@ public class GuiConfig {
         if (player == null || text == null) {
             return text;
         }
+
+        text = parsePlaceholders(player, text);
+
         java.util.regex.Pattern randomPattern = java.util.regex.Pattern.compile("<random:(-?\\d+),(-?\\d+)>");
         Matcher randomMatcher = randomPattern.matcher(text);
         while (randomMatcher.find()) {
@@ -509,7 +512,6 @@ public class GuiConfig {
             int randomNum = random.nextInt(max - min + 1) + min;
             text = text.replace(randomMatcher.group(0), String.valueOf(randomNum));
         }
-        text = parsePlaceholders(player, text);
         return text.replace("<player>", player.getName())
                 .replace("<location>", player.getLocation().toString())
                 .replace("<playerX>", String.valueOf(player.getLocation().getX()))
