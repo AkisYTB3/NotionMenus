@@ -59,6 +59,12 @@ public class GuiClickListener implements Listener {
                         case CONTROL_DROP:
                             executeActions(clickActions.get("ctrl_drop"), event);
                             break;
+                        case NUMBER_KEY:
+                            executeActions(clickActions.get("number_key"), event);
+                            break;
+                        case SWAP_OFFHAND:
+                            executeActions(clickActions.get("swap_offhand"), event);
+                            break;
                     }
                     return;
                 }
