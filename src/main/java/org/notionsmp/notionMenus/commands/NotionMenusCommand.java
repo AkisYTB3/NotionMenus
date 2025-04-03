@@ -27,8 +27,7 @@ public class NotionMenusCommand extends BaseCommand {
         NotionMenus.getInstance().getGuiManager().openGui(guiId, targetPlayer);
     }
 
-    @Subcommand("reload")
-    @CommandAlias("rl")
+    @Subcommand("reload|rl")
     @CommandPermission("notionmenus.reload")
     @Description("Reloads all GUIs from config")
     public void reload(CommandSender sender) {
