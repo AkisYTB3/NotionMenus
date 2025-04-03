@@ -47,6 +47,18 @@ public class GuiClickListener implements Listener {
                         case SHIFT_RIGHT:
                             executeActions(clickActions.get("shift_right"), event);
                             break;
+                        case MIDDLE:
+                            executeActions(clickActions.get("middle"), event);
+                            break;
+                        case DOUBLE_CLICK:
+                            executeActions(clickActions.get("double"), event);
+                            break;
+                        case DROP:
+                            executeActions(clickActions.get("drop"), event);
+                            break;
+                        case CONTROL_DROP:
+                            executeActions(clickActions.get("ctrl_drop"), event);
+                            break;
                     }
                     return;
                 }
@@ -62,6 +74,18 @@ public class GuiClickListener implements Listener {
                         break;
                     case SHIFT_RIGHT:
                         executeActions(clickActions.get("shift_right"), event);
+                        break;
+                    case MIDDLE:
+                        executeActions(clickActions.get("middle"), event);
+                        break;
+                    case DOUBLE_CLICK:
+                        executeActions(clickActions.get("double"), event);
+                        break;
+                    case DROP:
+                        executeActions(clickActions.get("drop"), event);
+                        break;
+                    case CONTROL_DROP:
+                        executeActions(clickActions.get("ctrl_drop"), event);
                         break;
                 }
             }
