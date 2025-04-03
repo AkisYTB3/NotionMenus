@@ -273,7 +273,7 @@ public class DeluxeMenusConverter {
     }
 
     private String convertMaterial(String material) {
-        return switch (material.toLowerCase()) {
+        String result = switch (material.toLowerCase()) {
             case "air" -> "empty";
             case "main_hand", "placeholder-main_hand" -> "mainhand";
             case "off_hand", "placeholder-off_hand" -> "offhand";
@@ -283,6 +283,10 @@ public class DeluxeMenusConverter {
                             material + " # Not implemented yet" :
                             material;
         };
+
+        if (NotionMenus.getInstance().getConfig().getBoolean("converter-properties.oraxen-to-nexo")) result = result.replaceAll("oraxen", "nexo");
+
+        return result;
     }
 
     private List<String> convertEnchantments(List<String> enchantments) {
@@ -376,7 +380,6 @@ public class DeluxeMenusConverter {
 
         return result;
     }
-
     private Object convertSlots(Object slots) {
         if (slots instanceof Integer) return slots;
         if (slots instanceof String slotStr) return slotStr.replace("-", "..");

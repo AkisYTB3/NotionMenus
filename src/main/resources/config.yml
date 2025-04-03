@@ -1,3 +1,8 @@
 # Whether DeluxeMenus conversion has been completed.
-# Do not touch.
+# Do not touch. only if you want to redo the conversion.
 converted: false
+
+converter-properties:
+    # Enabling this turns stuff like oraxen:item-id to nexo:item-id
+    # Useful for if you converted Oraxen to Nexo and also want your items in menus to be converted
+    oraxen-to-nexo: false
