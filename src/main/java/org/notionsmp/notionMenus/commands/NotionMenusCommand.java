@@ -28,6 +28,7 @@ public class NotionMenusCommand extends BaseCommand {
     }
 
     @Subcommand("reload")
+    @CommandAlias("rl")
     @CommandPermission("notionmenus.reload")
     @Description("Reloads all GUIs from config")
     public void reload(CommandSender sender) {
