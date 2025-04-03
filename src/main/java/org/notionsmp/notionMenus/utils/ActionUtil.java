@@ -163,7 +163,7 @@ public class ActionUtil {
                 connectToServer(player, processedContent);
                 break;
             case "[refresh]":
-                refreshPlayerGui(player);
+                NotionMenus.getInstance().getGuiManager().refreshPlayerGui(player);
                 break;
         }
     }
@@ -171,18 +171,6 @@ public class ActionUtil {
     private static String processContent(String content, Player player, InventoryClickEvent event) {
         content = replacePlaceholders(content, player, event);
         return GuiConfig.parsePlaceholders(player, content);
-    }
-
-    private static void refreshPlayerGui(Player player) {
-        Component title = player.getOpenInventory().title();
-        for (GuiConfig guiConfig : NotionMenus.getInstance().getGuiManager().getGuis().values()) {
-            String parsedTitle = GuiConfig.parsePlaceholders(player, guiConfig.getTitle());
-            Component parsedTitleComponent = MiniMessage.miniMessage().deserialize(parsedTitle);
-            if (title.equals(parsedTitleComponent)) {
-                NotionMenus.getInstance().getGuiManager().openGui(guiConfig.getId(), player);
-                break;
-            }
-        }
     }
 
     private static String replacePlaceholders(String text, Player player, InventoryClickEvent event) {

@@ -33,6 +33,8 @@ public class GuiConfig {
     private final Map<String, ItemHook> itemHooks = new HashMap<>();
     private final ClickAction openActions;
     private final List<String> openConditions;
+    private final int refreshRate;
+    private final Map<Integer, Boolean> updateItems = new HashMap<>();
     private static final Random random = new Random();
 
     public GuiConfig(FileConfiguration config) {
@@ -55,6 +57,7 @@ public class GuiConfig {
             this.openActions = new ClickAction(Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
         }
         this.openConditions = config.getStringList("open_conditions");
+        this.refreshRate = config.getInt("refresh_rate", 0);
         this.itemConfigs = new HashMap<>();
         this.clickActions = new HashMap<>();
 
@@ -68,7 +71,26 @@ public class GuiConfig {
             for (String itemKey : itemsSection.getKeys(false)) {
                 ConfigurationSection itemSection = itemsSection.getConfigurationSection(itemKey);
                 if (itemSection != null) {
-                    addItemToSlot(itemSection);
+                    boolean shouldUpdate = itemSection.getBoolean("update", false);
+                    Object slotObject = itemSection.get("slot");
+                    List<Integer> slots = parseSlots(slotObject);
+                    for (int slot : slots) {
+                        if (slot != -1) {
+                            updateItems.put(slot, shouldUpdate);
+                            itemConfigs.computeIfAbsent(slot, k -> new ArrayList<>()).add(itemSection);
+                            ConfigurationSection clickActionsSection = itemSection.getConfigurationSection("click_actions");
+                            if (clickActionsSection != null) {
+                                Map<String, ClickAction> actions = new HashMap<>();
+                                for (String clickType : clickActionsSection.getKeys(false)) {
+                                    List<String> conditions = clickActionsSection.getStringList(clickType + ".conditions");
+                                    List<String> actionList = clickActionsSection.getStringList(clickType + ".actions");
+                                    List<String> denyActions = clickActionsSection.getStringList(clickType + ".deny_actions");
+                                    actions.put(clickType, new ClickAction(conditions, actionList, denyActions));
+                                }
+                                clickActions.put(slot, actions);
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -76,28 +98,6 @@ public class GuiConfig {
 
     private void addHookIfPluginPresent(String id, ItemHook hook, String plugin) {
         if(Bukkit.getPluginManager().isPluginEnabled(plugin)) this.itemHooks.put(id, hook);
-    }
-
-    private void addItemToSlot(ConfigurationSection itemSection) {
-        Object slotObject = itemSection.get("slot");
-        if (slotObject == null) return;
-        List<Integer> slots = parseSlots(slotObject);
-        for (int slot : slots) {
-            if (slot != -1) {
-                itemConfigs.computeIfAbsent(slot, k -> new ArrayList<>()).add(itemSection);
-                ConfigurationSection clickActionsSection = itemSection.getConfigurationSection("click_actions");
-                if (clickActionsSection != null) {
-                    Map<String, ClickAction> actions = new HashMap<>();
-                    for (String clickType : clickActionsSection.getKeys(false)) {
-                        List<String> conditions = clickActionsSection.getStringList(clickType + ".conditions");
-                        List<String> actionList = clickActionsSection.getStringList(clickType + ".actions");
-                        List<String> denyActions = clickActionsSection.getStringList(clickType + ".deny_actions");
-                        actions.put(clickType, new ClickAction(conditions, actionList, denyActions));
-                    }
-                    clickActions.put(slot, actions);
-                }
-            }
-        }
     }
 
     private List<Integer> parseSlots(Object slotObject) {
@@ -484,6 +484,10 @@ public class GuiConfig {
             }
         }
         return null;
+    }
+
+    public boolean shouldUpdateOnRefresh(int slot) {
+        return updateItems.getOrDefault(slot, false);
     }
 
     public record ClickAction(List<String> conditions, List<String> actions, List<String> denyActions) {}

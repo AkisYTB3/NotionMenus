@@ -1,6 +1,7 @@
 package org.notionsmp.notionMenus.gui;
 
 import lombok.Getter;
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.ansi.ANSIComponentSerializer;
 import org.bukkit.Bukkit;
@@ -10,7 +11,9 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.scheduler.BukkitTask;
 import org.notionsmp.notionMenus.NotionMenus;
 import org.notionsmp.notionMenus.utils.ActionUtil;
 import org.notionsmp.notionMenus.utils.ConditionUtil;
@@ -24,6 +27,7 @@ import java.util.Map;
 public class GuiManager {
     private final Map<String, GuiConfig> guis = new HashMap<>();
     private final Map<String, String> commandToGuiIdMap = new HashMap<>();
+    private final Map<Player, Map<String, BukkitTask>> refreshTasks = new HashMap<>();
 
     public GuiManager() {
         loadGuis();
@@ -73,6 +77,8 @@ public class GuiManager {
     }
 
     public void openGui(String guiId, Player player) {
+        cancelRefreshTask(player, guiId);
+
         GuiConfig guiConfig = guis.get(guiId);
         if (guiConfig == null) {
             player.sendMessage(NotionMenus.NotionString(String.format("<red>GUI not found! (%s)", guiId)));
@@ -81,22 +87,106 @@ public class GuiManager {
         if (!guiConfig.canPlayerOpen(player)) {
             return;
         }
+
         String title = GuiConfig.replacePlaceholders(player,
                 GuiConfig.parsePlaceholders(player, guiConfig.getTitle()));
         Inventory gui = Bukkit.createInventory(null, guiConfig.getSize(),
                 MiniMessage.miniMessage().deserialize(title));
-        for (Map.Entry<Integer, List<ConfigurationSection>> entry : guiConfig.getItemConfigs().entrySet()) {
-            int slot = entry.getKey();
-            ItemStack item = guiConfig.createItemFromConfig(slot, player);
-            if (item != null && item.getType() != Material.AIR) {
-                gui.setItem(slot, item);
-            }
-        }
+        updateGuiItems(gui, guiConfig, player);
         player.openInventory(gui);
+
         if (ConditionUtil.checkConditions(guiConfig.getOpenActions().conditions(), player)) {
             executeActions(guiConfig.getOpenActions(), player, true);
         } else {
             executeActions(guiConfig.getOpenActions(), player, false);
+        }
+
+        if (guiConfig.getRefreshRate() > 0) {
+            startAutoRefresh(player, guiId, guiConfig);
+        }
+    }
+
+    private void updateGuiItems(Inventory gui, GuiConfig guiConfig, Player player) {
+        for (int slot = 0; slot < gui.getSize(); slot++) {
+            if (gui.getItem(slot) == null || guiConfig.shouldUpdateOnRefresh(slot)) {
+                ItemStack item = guiConfig.createItemFromConfig(slot, player);
+                gui.setItem(slot, item != null ? item : new ItemStack(Material.AIR));
+            }
+        }
+    }
+
+    private void startAutoRefresh(Player player, String guiId, GuiConfig guiConfig) {
+        BukkitTask task = Bukkit.getScheduler().runTaskTimer(NotionMenus.getInstance(), () -> {
+            InventoryView view = player.getOpenInventory();
+            if (!player.isOnline() || view == null) {
+                cancelRefreshTask(player, guiId);
+                return;
+            }
+
+            Inventory topInventory = view.getTopInventory();
+            if (topInventory == null) {
+                cancelRefreshTask(player, guiId);
+                return;
+            }
+
+            Component currentTitle = view.title();
+            String parsedTitle = GuiConfig.parsePlaceholders(player, guiConfig.getTitle());
+            Component parsedTitleComponent = MiniMessage.miniMessage().deserialize(parsedTitle);
+
+            if (currentTitle.equals(parsedTitleComponent)) {
+                refreshGui(player, guiConfig, false);
+            } else {
+                cancelRefreshTask(player, guiId);
+            }
+        }, guiConfig.getRefreshRate(), guiConfig.getRefreshRate());
+
+        refreshTasks.computeIfAbsent(player, k -> new HashMap<>()).put(guiId, task);
+    }
+
+    private void cancelRefreshTask(Player player, String guiId) {
+        if (refreshTasks.containsKey(player)) {
+            BukkitTask task = refreshTasks.get(player).remove(guiId);
+            if (task != null) {
+                task.cancel();
+            }
+            if (refreshTasks.get(player).isEmpty()) {
+                refreshTasks.remove(player);
+            }
+        }
+    }
+
+    public void refreshPlayerGui(Player player) {
+        Component title = player.getOpenInventory().title();
+        for (GuiConfig guiConfig : guis.values()) {
+            String parsedTitle = GuiConfig.parsePlaceholders(player, guiConfig.getTitle());
+            Component parsedTitleComponent = MiniMessage.miniMessage().deserialize(parsedTitle);
+            if (title.equals(parsedTitleComponent)) {
+                refreshGui(player, guiConfig, true);
+                break;
+            }
+        }
+    }
+
+    private void refreshGui(Player player, GuiConfig guiConfig, boolean manualRefresh) {
+        InventoryView openInventory = player.getOpenInventory();
+        Inventory topInventory = openInventory.getTopInventory();
+
+        for (int slot = 0; slot < topInventory.getSize(); slot++) {
+            if (manualRefresh || guiConfig.shouldUpdateOnRefresh(slot)) {
+                ItemStack item = guiConfig.createItemFromConfig(slot, player);
+                topInventory.setItem(slot, item != null ? item : new ItemStack(Material.AIR));
+            }
+        }
+
+        if (manualRefresh) {
+            player.updateInventory();
+        }
+    }
+
+    public void cleanupPlayer(Player player) {
+        if (refreshTasks.containsKey(player)) {
+            refreshTasks.get(player).values().forEach(BukkitTask::cancel);
+            refreshTasks.remove(player);
         }
     }
 
