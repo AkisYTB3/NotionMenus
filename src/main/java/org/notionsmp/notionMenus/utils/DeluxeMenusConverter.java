@@ -87,6 +87,10 @@ public class DeluxeMenusConverter {
         notionMenuConfig.set("title", convertLegacyColors(deluxeMenuConfig.getString("menu_title")));
         notionMenuConfig.set("size", deluxeMenuConfig.getInt("size"));
 
+        if (deluxeMenuConfig.contains("update_interval")) {
+            notionMenuConfig.set("refresh_rate", deluxeMenuConfig.getInt("update_interval"));
+        }
+
         convertOpenCommands(deluxeMenuConfig, notionMenuConfig);
         convertOpenRequirements(deluxeMenuConfig, notionMenuConfig);
         convertItems(deluxeMenuConfig, notionMenuConfig);
@@ -190,6 +194,10 @@ public class DeluxeMenusConverter {
             if (rgb != null) {
                 itemMap.put("color", rgb.replace(" ", ""));
             }
+        }
+
+        if (itemSection.contains("update")) {
+            itemMap.put("refresh", itemSection.getBoolean("update"));
         }
     }
 
