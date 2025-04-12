@@ -33,6 +33,9 @@ public class GuiClickListener implements Listener {
                 int slot = event.getSlot();
                 Map<String, GuiConfig.ClickAction> clickActions = guiConfig.getClickActions(slot, player);
                 ItemStack clickedItem = event.getCurrentItem();
+
+                executeActions(clickActions.get("all"), event);
+
                 if (clickedItem == null || clickedItem.getType() == Material.AIR) {
                     switch (event.getClick()) {
                         case LEFT:

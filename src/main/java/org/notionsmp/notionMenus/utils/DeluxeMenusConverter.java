@@ -205,6 +205,10 @@ public class DeluxeMenusConverter {
         convertViewRequirements(itemSection, itemMap);
         convertClickRequirements(itemSection, itemMap, "left");
         convertClickRequirements(itemSection, itemMap, "right");
+        convertClickRequirements(itemSection, itemMap, "shift_left");
+        convertClickRequirements(itemSection, itemMap, "shift_right");
+        convertClickRequirements(itemSection, itemMap, "middle");
+        convertClickRequirements(itemSection, itemMap, "all");
     }
 
     private void convertViewRequirements(ConfigurationSection itemSection, Map<String, Object> itemMap) {
@@ -221,8 +225,8 @@ public class DeluxeMenusConverter {
     }
 
     private void convertClickRequirements(ConfigurationSection itemSection, Map<String, Object> itemMap, String clickType) {
-        String commandsKey = clickType + "_click_commands";
-        String requirementKey = clickType + "_click_requirement";
+        String commandsKey = clickType.equals("all") ? "click_commands" : clickType + "_click_commands";
+        String requirementKey = clickType.equals("all") ? "requirement" : clickType + "_click_requirement";
 
         if (itemSection.contains(commandsKey)) {
             Map<String, Object> clickActions = new HashMap<>();
