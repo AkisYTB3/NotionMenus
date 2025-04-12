@@ -174,7 +174,7 @@ public class GuiConfig {
             }
         }
         String materialName = itemSection.getString("material");
-        Material material = Material.STONE;
+        Material material = Material.BARRIER;
         if (player != null && materialName != null) {
             materialName = replacePlaceholders(player, materialName);
         }
@@ -271,7 +271,7 @@ public class GuiConfig {
                     break;
                 default:
                     material = Material.matchMaterial(materialName);
-                    if (material == null) material = Material.STONE;
+                    if (material == null) material = Material.BARRIER;
                     item = new ItemStack(material);
                     break;
             }
