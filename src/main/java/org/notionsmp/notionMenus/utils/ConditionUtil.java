@@ -6,20 +6,29 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.notionsmp.notionMenus.NotionMenus;
+import org.notionsmp.notionMenus.gui.GuiConfig;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
 public class ConditionUtil {
-    public static boolean checkMoneyCondition(Player player, int amount) {
+    public static boolean checkMoneyCondition(Player player, String amountStr) {
         if (NotionMenus.getInstance().getEconomy() == null) return false;
-        return NotionMenus.getInstance().getEconomy().has(player, amount);
+        String processedAmount = processConditionValue(amountStr, player);
+        try {
+            int amount = Integer.parseInt(processedAmount);
+            return NotionMenus.getInstance().getEconomy().has(player, amount);
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 
     public static boolean checkItemCondition(Player player, String condition) {
-        String[] parts = condition.split("\\[|\\]");
+        String processed = processConditionValue(condition, player);
+        String[] parts = processed.split("\\[|\\]");
         if (parts.length < 3) return false;
         String itemName = parts[2].trim();
         String[] itemParts = itemName.split(":");
@@ -38,7 +47,8 @@ public class ConditionUtil {
     }
 
     public static boolean checkMetaCondition(Player player, String condition) {
-        String[] parts = condition.split("\\[|\\]");
+        String processed = processConditionValue(condition, player);
+        String[] parts = processed.split("\\[|\\]");
         if (parts.length < 3) return false;
         String metaValue = parts[2].trim();
         String[] metaParts = metaValue.split(":");
@@ -53,7 +63,8 @@ public class ConditionUtil {
     }
 
     public static boolean checkNearCondition(Player player, String condition) {
-        String[] parts = condition.split("\\[|\\]");
+        String processed = processConditionValue(condition, player);
+        String[] parts = processed.split("\\[|\\]");
         if (parts.length < 3) return false;
         String nearValue = parts[2].trim();
         String[] nearParts = nearValue.split(":");
@@ -72,8 +83,9 @@ public class ConditionUtil {
         return count >= requiredCount;
     }
 
-    public static boolean checkEqualsCondition(String condition) {
-        String[] parts = condition.split("\\[|\\]");
+    public static boolean checkEqualsCondition(Player player, String condition) {
+        String processed = processConditionValue(condition, player);
+        String[] parts = processed.split("\\[|\\]");
         if (parts.length < 3) return false;
         String compareValue = parts[2].trim();
         String[] compareParts = compareValue.split(":");
@@ -81,8 +93,9 @@ public class ConditionUtil {
         return compareParts[0].equals(compareParts[1]);
     }
 
-    public static boolean checkContainsCondition(String condition) {
-        String[] parts = condition.split("\\[|\\]");
+    public static boolean checkContainsCondition(Player player, String condition) {
+        String processed = processConditionValue(condition, player);
+        String[] parts = processed.split("\\[|\\]");
         if (parts.length < 3) return false;
         String compareValue = parts[2].trim();
         String[] compareParts = compareValue.split(":");
@@ -90,8 +103,9 @@ public class ConditionUtil {
         return compareParts[0].contains(compareParts[1]);
     }
 
-    public static boolean checkRegexCondition(String condition) {
-        String[] parts = condition.split("\\[|\\]");
+    public static boolean checkRegexCondition(Player player, String condition) {
+        String processed = processConditionValue(condition, player);
+        String[] parts = processed.split("\\[|\\]");
         if (parts.length < 3) return false;
         String regexValue = parts[2].trim();
         String[] regexParts = regexValue.split(":");
@@ -99,8 +113,9 @@ public class ConditionUtil {
         return Pattern.compile(regexParts[1]).matcher(regexParts[0]).matches();
     }
 
-    public static boolean checkCompareCondition(String condition) {
-        String[] parts = condition.split("\\[|\\]");
+    public static boolean checkCompareCondition(Player player, String condition) {
+        String processed = processConditionValue(condition, player);
+        String[] parts = processed.split("\\[|\\]");
         if (parts.length < 3) return false;
         String compareValue = parts[2].trim();
         String[] compareParts = compareValue.split(":");
@@ -115,12 +130,14 @@ public class ConditionUtil {
     }
 
     public static boolean checkPermissionCondition(Player player, String permission) {
-        return player.hasPermission(permission);
+        String processed = processConditionValue(permission, player);
+        return player.hasPermission(processed);
     }
 
     public static boolean checkGameModeCondition(Player player, String gameMode) {
+        String processed = processConditionValue(gameMode, player);
         try {
-            GameMode targetMode = GameMode.valueOf(gameMode.toUpperCase());
+            GameMode targetMode = GameMode.valueOf(processed.toUpperCase());
             return player.getGameMode() == targetMode;
         } catch (IllegalArgumentException e) {
             return false;
@@ -128,77 +145,102 @@ public class ConditionUtil {
     }
 
     public static boolean checkWorldCondition(Player player, String worldName) {
-        return player.getWorld().getName().equalsIgnoreCase(worldName);
+        String processed = processConditionValue(worldName, player);
+        return player.getWorld().getName().equalsIgnoreCase(processed);
     }
 
     public static boolean checkXPCondition(Player player, String xpValue) {
-        if (xpValue.endsWith("l")) {
-            int levels = Integer.parseInt(xpValue.substring(0, xpValue.length() - 1));
+        String processed = processConditionValue(xpValue, player);
+        if (processed.endsWith("l")) {
+            int levels = Integer.parseInt(processed.substring(0, processed.length() - 1));
             return player.getLevel() >= levels;
-        } else if (xpValue.endsWith("p")) {
-            int points = Integer.parseInt(xpValue.substring(0, xpValue.length() - 1));
+        } else if (processed.endsWith("p")) {
+            int points = Integer.parseInt(processed.substring(0, processed.length() - 1));
             return player.getTotalExperience() >= points;
         }
         return false;
+    }
+
+    public static boolean checkPlaceholderCondition(Player player, String placeholder) {
+        String result = GuiConfig.parsePlaceholders(player, placeholder);
+        return Boolean.parseBoolean(result);
+    }
+
+    private static String processConditionValue(String value, Player player) {
+
+        String processed = value;
+        processed = processed.replace("<player>", player.getName())
+                .replace("<location>", player.getLocation().toString())
+                .replace("<playerX>", String.valueOf(player.getLocation().getX()))
+                .replace("<playerY>", String.valueOf(player.getLocation().getY()))
+                .replace("<playerZ>", String.valueOf(player.getLocation().getZ()))
+                .replace("<player_health>", String.valueOf(player.getHealth()))
+                .replace("<player_food>", String.valueOf(player.getFoodLevel()));
+
+        return GuiConfig.parsePlaceholders(player, processed);
     }
 
     public static boolean checkConditions(List<String> conditions, Player player) {
         if (conditions == null || conditions.isEmpty()) return true;
         for (String condition : conditions) {
             if (condition == null || condition.isEmpty()) continue;
-            String[] parts = condition.split("\\[|\\]");
+
+            String processedCondition = processConditionValue(condition, player);
+            String[] parts = processedCondition.split("\\[|\\]");
             if (parts.length < 2) continue;
+
             String conditionType = parts[1].toLowerCase();
-            String conditionValue = condition.substring(condition.indexOf(']') + 1).trim();
+            String conditionValue = processedCondition.substring(processedCondition.indexOf(']') + 1).trim();
             boolean result;
+
             switch (conditionType) {
                 case "money":
-                    result = checkMoneyCondition(player, Integer.parseInt(conditionValue));
+                    result = checkMoneyCondition(player, conditionValue);
                     break;
                 case "!money":
-                    result = !checkMoneyCondition(player, Integer.parseInt(conditionValue));
+                    result = !checkMoneyCondition(player, conditionValue);
                     break;
                 case "item":
-                    result = checkItemCondition(player, condition);
+                    result = checkItemCondition(player, processedCondition);
                     break;
                 case "!item":
-                    result = !checkItemCondition(player, condition);
+                    result = !checkItemCondition(player, processedCondition);
                     break;
                 case "meta":
-                    result = checkMetaCondition(player, condition);
+                    result = checkMetaCondition(player, processedCondition);
                     break;
                 case "!meta":
-                    result = !checkMetaCondition(player, condition);
+                    result = !checkMetaCondition(player, processedCondition);
                     break;
                 case "near":
-                    result = checkNearCondition(player, condition);
+                    result = checkNearCondition(player, processedCondition);
                     break;
                 case "!near":
-                    result = !checkNearCondition(player, condition);
+                    result = !checkNearCondition(player, processedCondition);
                     break;
                 case "equals":
-                    result = checkEqualsCondition(condition);
+                    result = checkEqualsCondition(player, processedCondition);
                     break;
                 case "!equals":
-                    result = !checkEqualsCondition(condition);
+                    result = !checkEqualsCondition(player, processedCondition);
                     break;
                 case "contains":
-                    result = checkContainsCondition(condition);
+                    result = checkContainsCondition(player, processedCondition);
                     break;
                 case "!contains":
-                    result = !checkContainsCondition(condition);
+                    result = !checkContainsCondition(player, processedCondition);
                     break;
                 case "regex":
-                    result = checkRegexCondition(condition);
+                    result = checkRegexCondition(player, processedCondition);
                     break;
                 case "!regex":
-                    result = !checkRegexCondition(condition);
+                    result = !checkRegexCondition(player, processedCondition);
                     break;
                 case "compare":
-                    result = checkCompareCondition(condition);
+                    result = checkCompareCondition(player, processedCondition);
                     break;
                 case "!compare":
-                    result = !checkCompareCondition(condition);
+                    result = !checkCompareCondition(player, processedCondition);
                     break;
                 case "permission":
                     result = checkPermissionCondition(player, conditionValue);
