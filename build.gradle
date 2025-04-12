@@ -54,7 +54,13 @@ shadowJar {
     exclude 'META-INF/**'
 
     minimize()
+
+    archiveClassifier.set('')
 }
+
+jar.enabled = false
+
+tasks.build.dependsOn tasks.shadowJar
 
 def targetJavaVersion = Integer.parseInt(project.targetJavaVersion)
 java {
