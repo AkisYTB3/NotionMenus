@@ -9,8 +9,8 @@ public class ItemsAdderHook implements ItemHook {
     @Override
     public ItemStack getItem(String id, Player player) {
         CustomStack customStack = CustomStack.getInstance(id);
-        ItemStack item = customStack.getItemStack().clone();
         if (customStack != null) {
+            ItemStack item = customStack.getItemStack().clone();
             return item.clone();
         }
         return null;
