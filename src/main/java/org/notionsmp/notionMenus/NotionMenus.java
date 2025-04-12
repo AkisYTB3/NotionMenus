@@ -60,37 +60,44 @@ public class NotionMenus extends JavaPlugin {
     }
 
     private void checkForVaultWithRetries(int attempt) {
-        final int maxAttempts = 5;
+        final int maxAttempts = 3;
         final long delayBetweenAttempts = 20L;
 
         Bukkit.getScheduler().runTaskLater(this, () -> {
-            logAvailableServices();
+            if (Bukkit.getPluginManager().getPlugin("Vault") == null) {
+                if (attempt < maxAttempts - 1) {
+                    getLogger().info("Vault not found, retrying (attempt " + (attempt + 1) + ")...");
+                    checkForVaultWithRetries(attempt + 1);
+                } else {
+                    getLogger().warning("No Economy plugin found, some features will be disabled");
+                }
+                return;
+            }
+
+            try {
+                logAvailableServices();
+            } catch (NoClassDefFoundError e) {
+                getLogger().warning("Vault found but economy classes not available - economy features disabled");
+                return;
+            }
 
             this.isVaultEnabled = setupEconomy();
 
             if (this.isVaultEnabled) {
                 setupPermissions();
-            }
-
-            if (isVaultEnabled) {
                 getLogger().info("Successfully hooked into " + (isVaultUnlocked ? "VaultUnlocked" : "Vault") +
                         " economy via " + economy.getName());
             } else if (attempt < maxAttempts - 1) {
                 getLogger().info("Retrying Vault connection (attempt " + (attempt + 1) + ")...");
                 checkForVaultWithRetries(attempt + 1);
             } else {
-                getLogger().warning("Failed to hook into economy after " + maxAttempts + " attempts. Economy features disabled.");
+                getLogger().warning("No Economy plugin found, some features will be disabled");
             }
         }, delayBetweenAttempts);
     }
 
     private boolean setupEconomy() {
         try {
-            if (Bukkit.getPluginManager().getPlugin("Vault") == null) {
-                getLogger().warning("Vault plugin not found!");
-                return false;
-            }
-
             RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
             if (rsp != null) {
                 economy = rsp.getProvider();
@@ -109,10 +116,9 @@ public class NotionMenus extends JavaPlugin {
                     return true;
                 }
             } catch (ClassNotFoundException e) {
-                getLogger().info("VaultUnlocked economy class not found, using standard Vault");
+
             }
 
-            getLogger().warning("Found Vault plugin but no economy service registered!");
             return false;
         } catch (Exception e) {
             getLogger().warning("Error setting up economy: " + e.getMessage());
@@ -134,7 +140,7 @@ public class NotionMenus extends JavaPlugin {
                         return;
                     }
                 } catch (ClassNotFoundException e) {
-                    getLogger().info("VaultUnlocked permissions class not found, using standard Vault");
+
                 }
             }
 
@@ -151,15 +157,20 @@ public class NotionMenus extends JavaPlugin {
     }
 
     private void logAvailableServices() {
+        if (Bukkit.getPluginManager().getPlugin("Vault") == null) {
+            return;
+        }
+
         getLogger().info("Available services:");
 
-        getLogger().info("Economy services:");
-        for (RegisteredServiceProvider<Economy> provider :
-                getServer().getServicesManager().getRegistrations(Economy.class)) {
-            getLogger().info("- V1: " + provider.getProvider().getName() +
-                    " (priority: " + provider.getPriority() + ")");
-        }
         try {
+            getLogger().info("Economy services:");
+            for (RegisteredServiceProvider<Economy> provider :
+                    getServer().getServicesManager().getRegistrations(Economy.class)) {
+                getLogger().info("- V1: " + provider.getProvider().getName() +
+                        " (priority: " + provider.getPriority() + ")");
+            }
+
             Class<?> v2Class = Class.forName("net.milkbowl.vault2.economy.Economy");
             for (RegisteredServiceProvider<?> provider :
                     getServer().getServicesManager().getRegistrations(v2Class)) {
@@ -168,15 +179,18 @@ public class NotionMenus extends JavaPlugin {
             }
         } catch (ClassNotFoundException e) {
             getLogger().info("- No V2 economy services available");
+        } catch (NoClassDefFoundError e) {
+            getLogger().info("- Economy services not available");
         }
 
-        getLogger().info("Permission services:");
-        for (RegisteredServiceProvider<Permission> provider :
-                getServer().getServicesManager().getRegistrations(Permission.class)) {
-            getLogger().info("- V1: " + provider.getProvider().getClass().getName() +
-                    " (priority: " + provider.getPriority() + ")");
-        }
         try {
+            getLogger().info("Permission services:");
+            for (RegisteredServiceProvider<Permission> provider :
+                    getServer().getServicesManager().getRegistrations(Permission.class)) {
+                getLogger().info("- V1: " + provider.getProvider().getClass().getName() +
+                        " (priority: " + provider.getPriority() + ")");
+            }
+
             Class<?> v2PermissionClass = Class.forName("net.milkbowl.vault2.permission.Permission");
             for (RegisteredServiceProvider<?> provider :
                     getServer().getServicesManager().getRegistrations(v2PermissionClass)) {
@@ -185,6 +199,8 @@ public class NotionMenus extends JavaPlugin {
             }
         } catch (ClassNotFoundException e) {
             getLogger().info("- No V2 permission services available");
+        } catch (NoClassDefFoundError e) {
+            getLogger().info("- Permission services not available");
         }
     }
 
