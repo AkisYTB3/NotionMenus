@@ -31,20 +31,14 @@ public class NotionMenus extends JavaPlugin {
     private boolean isVaultEnabled;
     private boolean isVaultUnlocked = false;
 
-    private static final String PREFIX = "<gradient:#663399:#7069ff>Notion</gradient> <dark_gray>»</dark_gray> ";
-
-    public static Component NotionString(String... strings) {
-        StringBuilder messageBuilder = new StringBuilder();
-        for (String str : strings) {
-            messageBuilder.append(str);
-        }
-        return MiniMessage.miniMessage().deserialize(PREFIX + messageBuilder);
-    }
+    private String prefix;
 
     @Override
     public void onEnable() {
         instance = this;
         saveDefaultConfig();
+
+        prefix = getConfig().getString("prefix", "<gradient:#663399:#7069ff>Notion</gradient> <dark_gray>»</dark_gray> ");
 
         guiManager = new GuiManager();
 
@@ -58,6 +52,14 @@ public class NotionMenus extends JavaPlugin {
         getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
 
         checkForVaultWithRetries(0);
+    }
+
+    public static Component NotionString(String... strings) {
+        StringBuilder messageBuilder = new StringBuilder();
+        for (String str : strings) {
+            messageBuilder.append(str);
+        }
+        return MiniMessage.miniMessage().deserialize(instance.prefix + messageBuilder);
     }
 
     private void checkForVaultWithRetries(int attempt) {

@@ -6,3 +6,5 @@ converter-properties:
     # Enabling this turns stuff like oraxen:item-id to nexo:item-id
     # Useful for if you converted Oraxen to Nexo and also want your items in menus to be converted
     oraxen-to-nexo: false
+
+prefix: "<gradient:#663399:#7069ff>Notion</gradient> <dark_gray>»</dark_gray> "
