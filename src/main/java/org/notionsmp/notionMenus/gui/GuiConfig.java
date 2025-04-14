@@ -19,6 +19,7 @@ import org.notionsmp.notionMenus.NotionMenus;
 import org.notionsmp.notionMenus.hooks.*;
 import org.notionsmp.notionMenus.utils.ConditionUtil;
 
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.regex.Matcher;
 
@@ -99,6 +100,33 @@ public class GuiConfig {
     private void addHookIfPluginPresent(String id, ItemHook hook, String plugin) {
         if(Bukkit.getPluginManager().isPluginEnabled(plugin)) this.itemHooks.put(id, hook);
     }
+
+    private static boolean isItemModelSupported() {
+        try {
+            ItemMeta.class.getMethod("hasItemModel");
+            ItemMeta.class.getMethod("getItemModel");
+            ItemMeta.class.getMethod("setItemModel", NamespacedKey.class);
+            return true;
+        } catch (NoSuchMethodException e) {
+            return false;
+        }
+    }
+
+    private static void setItemModel(ItemMeta meta, String modelKey) {
+        if (!isItemModelSupported()) return;
+
+        try {
+            if (modelKey != null && !modelKey.isEmpty()) {
+                NamespacedKey key = NamespacedKey.fromString(modelKey);
+                if (key != null) {
+                    Method setItemModel = ItemMeta.class.getMethod("setItemModel", NamespacedKey.class);
+                    setItemModel.invoke(meta, key);
+                }
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
 
     private List<Integer> parseSlots(Object slotObject) {
         List<Integer> slots = new ArrayList<>();
@@ -295,6 +323,20 @@ public class GuiConfig {
         if (itemSection.contains("custom_model_data")) {
             meta.setCustomModelData(itemSection.getInt("custom_model_data"));
         }
+
+
+
+        if (itemSection.contains("item_model")) {
+            String modelKey = itemSection.getString("item_model");
+            if (modelKey != null && !modelKey.isEmpty()) {
+                if (player != null) {
+                    modelKey = replacePlaceholders(player, modelKey);
+                }
+                setItemModel(meta, modelKey);
+            }
+        }
+
+
         if (itemSection.contains("lore")) {
             List<Component> lore = new ArrayList<>();
             for (String line : itemSection.getStringList("lore")) {
