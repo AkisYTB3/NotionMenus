@@ -6,7 +6,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.notionsmp.notionMenus.NotionMenus;
 
-@CommandAlias("notionmenus|nm|notion")
+@CommandAlias("notionmenus|nm")
 @CommandPermission("notionmenus.use")
 public class NotionMenusCommand extends BaseCommand {
 
