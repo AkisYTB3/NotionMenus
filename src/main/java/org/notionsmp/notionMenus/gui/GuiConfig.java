@@ -101,10 +101,37 @@ public class GuiConfig {
         if(Bukkit.getPluginManager().isPluginEnabled(plugin)) this.itemHooks.put(id, hook);
     }
 
+    private static boolean isComponentsSystemSupported() {
+        try {
+            Class.forName("org.bukkit.inventory.meta.components.DataComponentType");
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
+    }
+
+    private static void setHideTooltip(ItemMeta meta, boolean hide) {
+        try {
+            if (isComponentsSystemSupported()) {
+                Class<?> dataComponentType = Class.forName("org.bukkit.inventory.meta.components.DataComponentType");
+                Class<?> tooltipDisplay = Class.forName("io.papermc.paper.datacomponent.item.TooltipDisplay");
+                Object builder = tooltipDisplay.getMethod("tooltipDisplay").invoke(null);
+                builder.getClass().getMethod("hideTooltip", boolean.class).invoke(builder, hide);
+                Object component = dataComponentType.getField("TOOLTIP").get(null);
+                meta.getClass().getMethod("set", dataComponentType, Object.class)
+                        .invoke(meta, component, builder.getClass().getMethod("build").invoke(builder));
+            } else {
+                Method m = meta.getClass().getMethod("setHideTooltip", boolean.class);
+                m.setAccessible(true);
+                m.invoke(meta, hide);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     private static boolean isItemModelSupported() {
         try {
-            ItemMeta.class.getMethod("hasItemModel");
-            ItemMeta.class.getMethod("getItemModel");
             ItemMeta.class.getMethod("setItemModel", NamespacedKey.class);
             return true;
         } catch (NoSuchMethodException e) {
@@ -113,20 +140,16 @@ public class GuiConfig {
     }
 
     private static void setItemModel(ItemMeta meta, String modelKey) {
-        if (!isItemModelSupported()) return;
-
+        if (!isItemModelSupported() || modelKey == null || modelKey.isEmpty()) return;
         try {
-            if (modelKey != null && !modelKey.isEmpty()) {
-                NamespacedKey key = NamespacedKey.fromString(modelKey);
-                if (key != null) {
-                    Method setItemModel = ItemMeta.class.getMethod("setItemModel", NamespacedKey.class);
-                    setItemModel.invoke(meta, key);
-                }
+            NamespacedKey key = NamespacedKey.fromString(modelKey);
+            if (key != null) {
+                ItemMeta.class.getMethod("setItemModel", NamespacedKey.class).invoke(meta, key);
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
-
 
     private List<Integer> parseSlots(Object slotObject) {
         List<Integer> slots = new ArrayList<>();
@@ -326,13 +349,22 @@ public class GuiConfig {
 
 
 
-        if (itemSection.contains("item_model")) {
-            String modelKey = itemSection.getString("item_model");
-            if (modelKey != null && !modelKey.isEmpty()) {
-                if (player != null) {
-                    modelKey = replacePlaceholders(player, modelKey);
+        if (itemSection.contains("Components")) {
+            ConfigurationSection componentsSection = itemSection.getConfigurationSection("Components");
+            if (componentsSection != null) {
+                if (componentsSection.contains("item_model")) {
+                    String modelKey = componentsSection.getString("item_model");
+                    if (modelKey != null && !modelKey.isEmpty()) {
+                        if (player != null) {
+                            modelKey = replacePlaceholders(player, modelKey);
+                        }
+                        setItemModel(meta, modelKey);
+                    }
                 }
-                setItemModel(meta, modelKey);
+                if (componentsSection.contains("hide_tooltip")) {
+                    boolean hideTooltip = componentsSection.getBoolean("hide_tooltip");
+                    setHideTooltip(meta, hideTooltip);
+                }
             }
         }
 
