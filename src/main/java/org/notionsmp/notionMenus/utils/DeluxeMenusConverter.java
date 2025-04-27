@@ -226,7 +226,7 @@ public class DeluxeMenusConverter {
 
     private void convertClickRequirements(ConfigurationSection itemSection, Map<String, Object> itemMap, String clickType) {
         String commandsKey = clickType.equals("all") ? "click_commands" : clickType + "_click_commands";
-        String requirementKey = clickType.equals("all") ? "requirement" : clickType + "_click_requirement";
+        String requirementKey = clickType.equals("all") ? "click_requirement" : clickType + "_click_requirement";
 
         if (itemSection.contains(commandsKey)) {
             Map<String, Object> clickActions = new HashMap<>();
