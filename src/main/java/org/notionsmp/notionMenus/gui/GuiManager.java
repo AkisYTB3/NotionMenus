@@ -90,8 +90,8 @@ public class GuiManager {
 
         String title = GuiConfig.replacePlaceholders(player,
                 GuiConfig.parsePlaceholders(player, guiConfig.getTitle()));
-        Inventory gui = Bukkit.createInventory(null, guiConfig.getSize(),
-                MiniMessage.miniMessage().deserialize(title));
+        Inventory gui = Bukkit.createInventory(new CustomInventoryHolder(guiId),
+                guiConfig.getSize(), MiniMessage.miniMessage().deserialize(title));
         updateGuiItems(gui, guiConfig, player);
         player.openInventory(gui);
 
@@ -124,16 +124,12 @@ public class GuiManager {
             }
 
             Inventory topInventory = view.getTopInventory();
-            if (topInventory == null) {
+            if (topInventory == null || !(topInventory.getHolder() instanceof CustomInventoryHolder holder)) {
                 cancelRefreshTask(player, guiId);
                 return;
             }
 
-            Component currentTitle = view.title();
-            String parsedTitle = GuiConfig.parsePlaceholders(player, guiConfig.getTitle());
-            Component parsedTitleComponent = MiniMessage.miniMessage().deserialize(parsedTitle);
-
-            if (currentTitle.equals(parsedTitleComponent)) {
+            if (holder.getGuiId().equals(guiId)) {
                 refreshGui(player, guiConfig, false);
             } else {
                 cancelRefreshTask(player, guiId);
@@ -156,13 +152,11 @@ public class GuiManager {
     }
 
     public void refreshPlayerGui(Player player) {
-        Component title = player.getOpenInventory().title();
-        for (GuiConfig guiConfig : guis.values()) {
-            String parsedTitle = GuiConfig.parsePlaceholders(player, guiConfig.getTitle());
-            Component parsedTitleComponent = MiniMessage.miniMessage().deserialize(parsedTitle);
-            if (title.equals(parsedTitleComponent)) {
+        InventoryView view = player.getOpenInventory();
+        if (view.getTopInventory().getHolder() instanceof CustomInventoryHolder holder) {
+            GuiConfig guiConfig = guis.get(holder.getGuiId());
+            if (guiConfig != null) {
                 refreshGui(player, guiConfig, true);
-                break;
             }
         }
     }
