@@ -1,0 +1,19 @@
+name: NotionMenus
+version: ${version}
+main: org.notionsmp.notionMenus.NotionMenus
+api-version: '1.21'
+author: "Akis (discord: yeahakis)"
+dependencies:
+  server:
+    Nexo:
+      load: BEFORE
+      required: false
+    PlaceholderAPI:
+      load: BEFORE
+      required: false
+    ItemsAdder:
+      load: BEFORE
+      required: false
+    Vault:
+      load: BEFORE
+      required: false
