@@ -17,6 +17,7 @@ import org.notionsmp.notionMenus.listeners.GuiClickListener;
 import org.notionsmp.notionMenus.listeners.GuiCommandListener;
 import org.notionsmp.notionMenus.listeners.hooks.NexoHookListener;
 import org.notionsmp.notionMenus.utils.DeluxeMenusConverter;
+import org.notionsmp.notionMenus.utils.Metrics;
 
 @Getter
 public class NotionMenus extends JavaPlugin {
@@ -52,6 +53,11 @@ public class NotionMenus extends JavaPlugin {
         getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
 
         checkForVaultWithRetries(0);
+        initMetrics();
+    }
+
+    private void initMetrics() {
+        Metrics metrics = new Metrics(this, 25732);
     }
 
     public static Component NotionString(String... strings) {
