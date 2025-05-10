@@ -46,6 +46,10 @@ public class GuiManager {
     }
 
     public void loadGuis() {
+        loadGuis(false);
+    }
+
+    public void loadGuis(boolean quiet) {
         File menusDir = new File(NotionMenus.getInstance().getDataFolder(), "menus");
         if (!menusDir.exists()) {
             boolean dirsCreated = menusDir.mkdirs();
@@ -64,12 +68,16 @@ public class GuiManager {
         for (File file : files) {
             FileConfiguration config = YamlConfiguration.loadConfiguration(file);
             if (!config.contains("id")) {
-                NotionMenus.getInstance().getLogger().warning("Skipping " + file.getName() + " because it does not contain an id.");
+                if (!quiet) {
+                    NotionMenus.getInstance().getLogger().warning("Skipping " + file.getName() + " because it does not contain an id.");
+                }
                 continue;
             }
-            NotionMenus.getInstance().getLogger().info(ANSIComponentSerializer.ansi().serialize(
-                    MiniMessage.miniMessage().deserialize("<green>Loaded GUI <dark_green>" + config.getString("id") +
-                            "</dark_green> from file <dark_green>" + file.getName() + "</dark_green>.")));
+            if (!quiet) {
+                NotionMenus.getInstance().getLogger().info(ANSIComponentSerializer.ansi().serialize(
+                        MiniMessage.miniMessage().deserialize("<green>Loaded GUI <dark_green>" + config.getString("id") +
+                                "</dark_green> from file <dark_green>" + file.getName() + "</dark_green>.")));
+            }
             GuiConfig guiConfig = new GuiConfig(config);
             guis.put(guiConfig.getId(), guiConfig);
             registerGuiCommands(guiConfig);
@@ -193,8 +201,12 @@ public class GuiManager {
     }
 
     public void reloadGuis() {
+        reloadGuis(false);
+    }
+
+    public void reloadGuis(boolean quiet) {
         guis.clear();
         commandToGuiIdMap.clear();
-        loadGuis();
+        loadGuis(quiet);
     }
 }

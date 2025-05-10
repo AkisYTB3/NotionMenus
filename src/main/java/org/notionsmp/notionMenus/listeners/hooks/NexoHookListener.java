@@ -8,6 +8,6 @@ import org.notionsmp.notionMenus.NotionMenus;
 public class NexoHookListener implements Listener {
     @EventHandler
     public void on(NexoItemsLoadedEvent event) {
-        NotionMenus.getInstance().getGuiManager().reloadGuis();
+        NotionMenus.getInstance().getGuiManager().reloadGuis(true);
     }
 }
