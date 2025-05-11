@@ -6,7 +6,6 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.event.inventory.InventoryClickEvent;
 import org.notionsmp.notionMenus.NotionMenus;
 import org.notionsmp.notionMenus.gui.GuiConfig;
 
