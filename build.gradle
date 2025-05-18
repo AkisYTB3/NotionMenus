@@ -10,7 +10,7 @@ group = project.group
 def gitVersion = versionDetails()
 def gitHash = gitVersion.gitHash.substring(0, 7)
 
-version = project.version.toString().endsWith("-DEV") ?
+version = project.version.toString().endsWith("-dev") ?
         "${project.version}-${gitHash}" :
         project.version
 
