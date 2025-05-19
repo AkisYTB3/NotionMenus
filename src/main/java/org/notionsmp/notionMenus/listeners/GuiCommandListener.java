@@ -6,16 +6,24 @@ import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.entity.Player;
 import org.notionsmp.notionMenus.NotionMenus;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class GuiCommandListener implements Listener {
     @EventHandler
     public void onPlayerCommandPreprocess(PlayerCommandPreprocessEvent event) {
         Player player = event.getPlayer();
-        String command = event.getMessage().toLowerCase().substring(1);
+        String[] parts = event.getMessage().substring(1).split(" ");
+        String command = parts[0].toLowerCase();
 
         String guiId = NotionMenus.getInstance().getGuiManager().getGuiIdByCommand(command);
         if (guiId != null) {
             event.setCancelled(true);
-            NotionMenus.getInstance().getGuiManager().openGui(guiId, player);
+            List<String> args = new ArrayList<>();
+            for (int i = 1; i < parts.length; i++) {
+                args.add(parts[i]);
+            }
+            NotionMenus.getInstance().getGuiManager().openGui(guiId, player, args);
         }
     }
 }

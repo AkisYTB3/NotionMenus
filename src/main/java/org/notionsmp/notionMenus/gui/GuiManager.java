@@ -17,9 +17,7 @@ import org.notionsmp.notionMenus.utils.ActionUtil;
 import org.notionsmp.notionMenus.utils.ConditionUtil;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Getter
 public class GuiManager {
@@ -83,6 +81,10 @@ public class GuiManager {
     }
 
     public void openGui(String guiId, Player player) {
+        openGui(guiId, player, new ArrayList<>());
+    }
+
+    public void openGui(String guiId, Player player, List<String> args) {
         cancelRefreshTask(player, guiId);
 
         GuiConfig guiConfig = guis.get(guiId);
@@ -94,11 +96,26 @@ public class GuiManager {
             return;
         }
 
+        Map<String, String> parsedArgs = new LinkedHashMap<>();
+        List<String> argNames = new ArrayList<>(guiConfig.getArgs().keySet());
+        for (int i = 0; i < argNames.size(); i++) {
+            String argName = argNames.get(i);
+            String defaultValue = guiConfig.getArgs().get(argName);
+            if (i < args.size()) {
+                parsedArgs.put(argName, GuiConfig.replacePlaceholders(player, args.get(i), parsedArgs));
+            } else if (defaultValue != null) {
+                parsedArgs.put(argName, GuiConfig.replacePlaceholders(player, defaultValue, parsedArgs));
+            } else {
+                player.sendMessage(NotionMenus.NotionString("<red>Missing required argument: " + argName));
+                return;
+            }
+        }
+
         String title = GuiConfig.replacePlaceholders(player,
-                GuiConfig.parsePlaceholders(player, guiConfig.getTitle()));
-        Inventory gui = Bukkit.createInventory(new CustomInventoryHolder(guiId),
+                GuiConfig.parsePlaceholders(player, guiConfig.getTitle()), parsedArgs);
+        Inventory gui = Bukkit.createInventory(new CustomInventoryHolder(guiId, parsedArgs),
                 guiConfig.getSize(), MiniMessage.miniMessage().deserialize(title));
-        updateGuiItems(gui, guiConfig, player);
+        updateGuiItems(gui, guiConfig, player, parsedArgs);
         player.openInventory(gui);
 
         if (ConditionUtil.checkConditions(guiConfig.getOpenActions().conditions(), player)) {
@@ -112,10 +129,10 @@ public class GuiManager {
         }
     }
 
-    private void updateGuiItems(Inventory gui, GuiConfig guiConfig, Player player) {
+    private void updateGuiItems(Inventory gui, GuiConfig guiConfig, Player player, Map<String, String> args) {
         for (int slot = 0; slot < gui.getSize(); slot++) {
             if (gui.getItem(slot) == null || guiConfig.shouldUpdateOnRefresh(slot)) {
-                ItemStack item = guiConfig.createItemFromConfig(slot, player);
+                ItemStack item = guiConfig.createItemFromConfig(slot, player, args);
                 gui.setItem(slot, item != null ? item : new ItemStack(Material.AIR));
             }
         }
@@ -173,7 +190,8 @@ public class GuiManager {
 
         for (int slot = 0; slot < topInventory.getSize(); slot++) {
             if (manualRefresh || guiConfig.shouldUpdateOnRefresh(slot)) {
-                ItemStack item = guiConfig.createItemFromConfig(slot, player);
+                ItemStack item = guiConfig.createItemFromConfig(slot, player,
+                        ((CustomInventoryHolder) topInventory.getHolder()).getArgs());
                 topInventory.setItem(slot, item != null ? item : new ItemStack(Material.AIR));
             }
         }

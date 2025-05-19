@@ -36,6 +36,7 @@ public class GuiConfig {
     private final List<String> openConditions;
     private final int refreshRate;
     private final Map<Integer, Boolean> updateItems = new HashMap<>();
+    private final Map<String, String> args = new LinkedHashMap<>();
     private static final Random random = new Random();
 
     public GuiConfig(FileConfiguration config) {
@@ -93,6 +94,14 @@ public class GuiConfig {
                         }
                     }
                 }
+            }
+        }
+        for (String arg : config.getStringList("args")) {
+            if (arg.contains("=")) {
+                String[] parts = arg.split("=", 2);
+                args.put(parts[0], parts[1]);
+            } else {
+                args.put(arg, null);
             }
         }
     }
@@ -199,7 +208,7 @@ public class GuiConfig {
         return slots;
     }
 
-    public ItemStack createItemFromConfig(int slot, Player player) {
+    public ItemStack createItemFromConfig(int slot, Player player, Map<String, String> args) {
         List<ConfigurationSection> itemsForSlot = itemConfigs.get(slot);
         if (itemsForSlot == null || itemsForSlot.isEmpty()) {
             return new ItemStack(Material.AIR);
@@ -211,13 +220,13 @@ public class GuiConfig {
         });
         for (ConfigurationSection itemSection : itemsForSlot) {
             if (checkViewConditions(itemSection.getStringList("view_conditions"), player)) {
-                return createItemFromConfig(itemSection, player);
+                return createItemFromConfig(itemSection, player, args);
             }
         }
         return new ItemStack(Material.AIR);
     }
 
-    private ItemStack createItemFromConfig(ConfigurationSection itemSection, Player player) {
+    private ItemStack createItemFromConfig(ConfigurationSection itemSection, Player player, Map<String, String> args) {
         if (itemSection.contains("view_conditions")) {
             List<String> viewConditions = itemSection.getStringList("view_conditions");
             if (!checkViewConditions(viewConditions, player)) {
@@ -227,7 +236,7 @@ public class GuiConfig {
         String materialName = itemSection.getString("material");
         Material material = Material.BARRIER;
         if (player != null && materialName != null) {
-            materialName = replacePlaceholders(player, materialName);
+            materialName = replacePlaceholders(player, materialName, args);
         }
         ItemStack item = null;
         if (materialName != null && materialName.contains("-")) {
@@ -337,7 +346,7 @@ public class GuiConfig {
         if (itemSection.contains("itemname")) {
             String itemName = itemSection.getString("itemname");
             if (player != null && itemName != null) {
-                itemName = replacePlaceholders(player, itemName);
+                itemName = replacePlaceholders(player, itemName, args);
             }
             if (itemName != null) {
                 meta.displayName(MiniMessage.miniMessage().deserialize(itemName));
@@ -347,8 +356,6 @@ public class GuiConfig {
             meta.setCustomModelData(itemSection.getInt("custom_model_data"));
         }
 
-
-
         if (itemSection.contains("Components")) {
             ConfigurationSection componentsSection = itemSection.getConfigurationSection("Components");
             if (componentsSection != null) {
@@ -356,7 +363,7 @@ public class GuiConfig {
                     String modelKey = componentsSection.getString("item_model");
                     if (modelKey != null && !modelKey.isEmpty()) {
                         if (player != null) {
-                            modelKey = replacePlaceholders(player, modelKey);
+                            modelKey = replacePlaceholders(player, modelKey, args);
                         }
                         setItemModel(meta, modelKey);
                     }
@@ -368,12 +375,11 @@ public class GuiConfig {
             }
         }
 
-
         if (itemSection.contains("lore")) {
             List<Component> lore = new ArrayList<>();
             for (String line : itemSection.getStringList("lore")) {
                 if (player != null && line != null) {
-                    line = replacePlaceholders(player, line);
+                    line = replacePlaceholders(player, line, args);
                 }
                 if (line != null) {
                     lore.add(MiniMessage.miniMessage().deserialize(line));
@@ -408,7 +414,7 @@ public class GuiConfig {
                     item.setAmount(amountValue);
                 } catch (NumberFormatException e) {
                     if (player != null) {
-                        amount = replacePlaceholders(player, amount);
+                        amount = replacePlaceholders(player, amount, args);
                         try {
                             int amountValue = Integer.parseInt(amount);
                             item.setAmount(amountValue);
@@ -571,12 +577,16 @@ public class GuiConfig {
         return text;
     }
 
-    public static String replacePlaceholders(Player player, String text) {
+    public static String replacePlaceholders(Player player, String text, Map<String, String> args) {
         if (player == null || text == null) {
             return text;
         }
 
         text = parsePlaceholders(player, text);
+
+        for (Map.Entry<String, String> arg : args.entrySet()) {
+            text = text.replace("${" + arg.getKey() + "}", arg.getValue());
+        }
 
         java.util.regex.Pattern randomPattern = java.util.regex.Pattern.compile("<random:(-?\\d+),(-?\\d+)>");
         Matcher randomMatcher = randomPattern.matcher(text);
