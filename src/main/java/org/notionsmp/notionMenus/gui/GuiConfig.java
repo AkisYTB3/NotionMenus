@@ -1,5 +1,6 @@
 package org.notionsmp.notionMenus.gui;
 
+import com.nexomc.nexo.utils.AdventureUtils;
 import lombok.Getter;
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.kyori.adventure.text.Component;
@@ -343,13 +344,21 @@ public class GuiConfig {
         if (meta == null) {
             meta = Bukkit.getItemFactory().getItemMeta(item.getType());
         }
-        if (itemSection.contains("itemname")) {
-            String itemName = itemSection.getString("itemname");
-            if (player != null && itemName != null) {
-                itemName = replacePlaceholders(player, itemName, args);
-            }
-            if (itemName != null) {
-                meta.displayName(MiniMessage.miniMessage().deserialize(itemName));
+        for (String key : new String[]{"itemname", "displayname"}) {
+            if (itemSection.contains(key)) {
+                String itemName = itemSection.getString(key);
+                if (player != null && itemName != null) {
+                    itemName = replacePlaceholders(player, itemName, args);
+                }
+                if (itemName != null) {
+                    Component component = parseMiniMessage(itemName);
+
+                    if (key.equals("itemname")) {
+                        meta.itemName(component);
+                    } else {
+                        meta.displayName(component);
+                    }
+                }
             }
         }
         if (itemSection.contains("custom_model_data")) {
@@ -382,7 +391,7 @@ public class GuiConfig {
                     line = replacePlaceholders(player, line, args);
                 }
                 if (line != null) {
-                    lore.add(MiniMessage.miniMessage().deserialize(line));
+                    lore.add(parseMiniMessage(line));
                 }
             }
             meta.lore(lore);
@@ -511,6 +520,12 @@ public class GuiConfig {
         }
         item.setItemMeta(meta);
         return item;
+    }
+
+    private Component parseMiniMessage(String text) {
+        return Bukkit.getPluginManager().isPluginEnabled("Nexo")
+                ? AdventureUtils.INSTANCE.getMINI_MESSAGE().deserialize(text)
+                : MiniMessage.miniMessage().deserialize(text);
     }
 
     private boolean checkViewConditions(List<String> viewConditions, Player player) {
