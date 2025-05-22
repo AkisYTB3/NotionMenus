@@ -215,9 +215,13 @@ public class GuiConfig {
             return new ItemStack(Material.AIR);
         }
         itemsForSlot.sort((item1, item2) -> {
-            int priority1 = item1.getInt("priority", 0);
-            int priority2 = item2.getInt("priority", 0);
-            return Integer.compare(priority2, priority1);
+            int priority1 = item1.getInt("priority", Integer.MAX_VALUE);
+            int priority2 = item2.getInt("priority", Integer.MAX_VALUE);
+
+            if (priority1 == -1) return -1;
+            if (priority2 == -1) return 1;
+
+            return Integer.compare(priority1, priority2);
         });
         for (ConfigurationSection itemSection : itemsForSlot) {
             if (checkViewConditions(itemSection.getStringList("view_conditions"), player)) {
@@ -569,9 +573,13 @@ public class GuiConfig {
             return null;
         }
         itemsForSlot.sort((item1, item2) -> {
-            int priority1 = item1.getInt("priority", 0);
-            int priority2 = item2.getInt("priority", 0);
-            return Integer.compare(priority2, priority1);
+            int priority1 = item1.getInt("priority", Integer.MAX_VALUE);
+            int priority2 = item2.getInt("priority", Integer.MAX_VALUE);
+
+            if (priority1 == -1) return -1;
+            if (priority2 == -1) return 1;
+
+            return Integer.compare(priority1, priority2);
         });
         for (ConfigurationSection itemSection : itemsForSlot) {
             if (checkViewConditions(itemSection.getStringList("view_conditions"), player)) {
