@@ -167,6 +167,16 @@ public class DeluxeMenusConverter {
             itemMap.put("custom_model_data", itemSection.getInt("model_data"));
         }
 
+        if (itemSection.contains("priority")) {
+            itemMap.put("priority", itemSection.getInt("priority"));
+        }
+
+        if (itemSection.contains("item_model")) {
+            Map<String, Object> components = new HashMap<>();
+            components.put("item_model", itemSection.get("item_model"));
+            itemMap.put("Components", components);
+        }
+
         if (itemSection.contains("slot") || itemSection.contains("slots")) {
             itemMap.put("slot", convertSlots(itemSection.contains("slot") ?
                     itemSection.get("slot") :
