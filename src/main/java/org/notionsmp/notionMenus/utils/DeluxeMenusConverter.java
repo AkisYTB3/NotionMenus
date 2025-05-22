@@ -1,5 +1,6 @@
 package org.notionsmp.notionMenus.utils;
 
+import com.nexomc.nexo.api.NexoBlocks;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -157,7 +158,10 @@ public class DeluxeMenusConverter {
             itemMap.put("material", convertMaterial(material));
         }
 
-        itemMap.put("itemname", convertLegacyColors(itemSection.getString("display_name")));
+        String displayName = itemSection.getString("display_name");
+        if (displayName != null) {
+            itemMap.put("displayname", convertLegacyColors(displayName));
+        }
 
         if (itemSection.contains("model_data")) {
             itemMap.put("custom_model_data", itemSection.getInt("model_data"));
