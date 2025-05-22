@@ -597,11 +597,11 @@ public class GuiConfig {
             return text;
         }
 
-        text = parsePlaceholders(player, text);
-
         for (Map.Entry<String, String> arg : args.entrySet()) {
             text = text.replace("${" + arg.getKey() + "}", arg.getValue());
         }
+
+        text = parsePlaceholders(player, text);
 
         java.util.regex.Pattern randomPattern = java.util.regex.Pattern.compile("<random:(-?\\d+),(-?\\d+)>");
         Matcher randomMatcher = randomPattern.matcher(text);
