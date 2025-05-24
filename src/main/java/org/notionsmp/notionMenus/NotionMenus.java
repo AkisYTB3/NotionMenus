@@ -14,7 +14,6 @@ import org.notionsmp.notionMenus.commands.GUICompletions;
 import org.notionsmp.notionMenus.commands.NotionMenusCommand;
 import org.notionsmp.notionMenus.gui.GuiManager;
 import org.notionsmp.notionMenus.listeners.GuiClickListener;
-import org.notionsmp.notionMenus.listeners.GuiCommandListener;
 import org.notionsmp.notionMenus.listeners.hooks.NexoHookListener;
 import org.notionsmp.notionMenus.utils.DeluxeMenusConverter;
 import org.notionsmp.notionMenus.utils.Metrics;
@@ -215,7 +214,6 @@ public class NotionMenus extends JavaPlugin {
 
     private void registerListeners() {
         registerListener(new GuiClickListener());
-        registerListener(new GuiCommandListener());
         try {
             registerListener(new NexoHookListener());
         } catch (NoClassDefFoundError ignored) {}

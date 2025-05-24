@@ -5,6 +5,7 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.ansi.ANSIComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.command.*;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -12,33 +13,65 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitTask;
+import org.jetbrains.annotations.NotNull;
 import org.notionsmp.notionMenus.NotionMenus;
 import org.notionsmp.notionMenus.utils.ActionUtil;
 import org.notionsmp.notionMenus.utils.ConditionUtil;
 
 import java.io.File;
+import java.lang.reflect.Field;
 import java.util.*;
 
 @Getter
 public class GuiManager {
     private final Map<String, GuiConfig> guis = new HashMap<>();
-    private final Map<String, String> commandToGuiIdMap = new HashMap<>();
+    private final List<Command> registeredCommands = new ArrayList<>();
     private final Map<Player, Map<String, BukkitTask>> refreshTasks = new HashMap<>();
 
     public GuiManager() {
         loadGuis();
     }
 
-    public void registerGuiCommands(GuiConfig guiConfig) {
-        for (String command : guiConfig.getCommands()) {
-            if (command != null) {
-                commandToGuiIdMap.put(command.toLowerCase(), guiConfig.getId());
+    private Command createGuiCommand(GuiConfig guiConfig, String mainCommand, List<String> aliases) {
+        return new Command(mainCommand) {
+            @Override
+            public boolean execute(CommandSender sender, String label, String[] args) {
+                if (!(sender instanceof Player player)) {
+                    sender.sendMessage("Only players can use this command.");
+                    return true;
+                }
+                List<String> argsList = Arrays.asList(args);
+                openGui(guiConfig.getId(), player, argsList);
+                return true;
             }
-        }
+
+            @Override
+            public @NotNull List<String> tabComplete(@NotNull CommandSender sender, @NotNull String alias, String[] args) {
+                return Collections.emptyList();
+            }
+        };
     }
 
-    public String getGuiIdByCommand(String command) {
-        return commandToGuiIdMap.get(command.toLowerCase());
+    public void registerGuiCommands(GuiConfig guiConfig) {
+        if (guiConfig.getCommands().isEmpty()) return;
+
+        String mainCommand = guiConfig.getCommands().get(0);
+        List<String> aliases = guiConfig.getCommands().size() > 1 ?
+                guiConfig.getCommands().subList(1, guiConfig.getCommands().size()) :
+                Collections.emptyList();
+
+        Command command = createGuiCommand(guiConfig, mainCommand, aliases);
+        command.setAliases(aliases);
+
+        try {
+            Field commandMapField = Bukkit.getServer().getClass().getDeclaredField("commandMap");
+            commandMapField.setAccessible(true);
+            CommandMap commandMap = (CommandMap) commandMapField.get(Bukkit.getServer());
+            commandMap.register("notionmenus", command);
+            registeredCommands.add(command);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void loadGuis() {
@@ -76,7 +109,9 @@ public class GuiManager {
             }
             GuiConfig guiConfig = new GuiConfig(config);
             guis.put(guiConfig.getId(), guiConfig);
-            registerGuiCommands(guiConfig);
+            if (!guiConfig.getCommands().isEmpty()) {
+                registerGuiCommands(guiConfig);
+            }
         }
     }
 
@@ -221,8 +256,28 @@ public class GuiManager {
     }
 
     public void reloadGuis(boolean quiet) {
+        try {
+            Field commandMapField = Bukkit.getServer().getClass().getDeclaredField("commandMap");
+            commandMapField.setAccessible(true);
+            CommandMap commandMap = (CommandMap) commandMapField.get(Bukkit.getServer());
+
+            Field knownCommandsField = SimpleCommandMap.class.getDeclaredField("knownCommands");
+            knownCommandsField.setAccessible(true);
+            Map<String, Command> knownCommands = (Map<String, Command>) knownCommandsField.get(commandMap);
+
+            for (Command cmd : registeredCommands) {
+                knownCommands.remove(cmd.getName().toLowerCase());
+                knownCommands.remove("notionmenus:" + cmd.getName().toLowerCase());
+                for (String alias : cmd.getAliases()) {
+                    knownCommands.remove(alias.toLowerCase());
+                    knownCommands.remove("notionmenus:" + alias.toLowerCase());
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        registeredCommands.clear();
         guis.clear();
-        commandToGuiIdMap.clear();
         loadGuis(quiet);
     }
 }
