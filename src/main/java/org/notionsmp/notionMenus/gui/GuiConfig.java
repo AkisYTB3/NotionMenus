@@ -38,12 +38,14 @@ public class GuiConfig {
     private final int refreshRate;
     private final Map<Integer, Boolean> updateItems = new HashMap<>();
     private final Map<String, String> args = new LinkedHashMap<>();
+    private final boolean lockInventory;
     private static final Random random = new Random();
 
     public GuiConfig(FileConfiguration config) {
         this.id = config.getString("id");
         this.title = config.getString("title");
         this.size = config.getInt("size", 54);
+        this.lockInventory = config.getBoolean("lock-inventory", true);
         if (config.isList("command")) {
             this.commands = config.getStringList("command");
         } else {

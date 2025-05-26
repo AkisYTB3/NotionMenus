@@ -1,13 +1,12 @@
 package org.notionsmp.notionMenus.listeners;
 
 import lombok.RequiredArgsConstructor;
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
 import org.notionsmp.notionMenus.NotionMenus;
 import org.notionsmp.notionMenus.gui.CustomInventoryHolder;
 import org.notionsmp.notionMenus.gui.GuiConfig;
@@ -20,48 +19,72 @@ import java.util.Map;
 public class GuiClickListener implements Listener {
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
-        Inventory clickedInventory = event.getClickedInventory();
-        if (clickedInventory == null) return;
-
-        if (!(clickedInventory.getHolder() instanceof CustomInventoryHolder holder)) return;
+        if (!(event.getView().getTopInventory().getHolder() instanceof CustomInventoryHolder holder)) {
+            return;
+        }
 
         Player player = (Player) event.getWhoClicked();
         GuiConfig guiConfig = NotionMenus.getInstance().getGuiManager().getGuis().get(holder.getGuiId());
         if (guiConfig == null) return;
 
         event.setCancelled(true);
-        int slot = event.getSlot();
-        Map<String, GuiConfig.ClickAction> clickActions = guiConfig.getClickActions(slot, player);
-        ItemStack clickedItem = event.getCurrentItem();
 
-        executeActions(clickActions.get("all"), event);
+        Inventory clickedInventory = event.getClickedInventory();
 
-        if (clickedItem == null || clickedItem.getType() == Material.AIR) {
-            switch (event.getClick()) {
-                case LEFT -> executeActions(clickActions.get("left"), event);
-                case RIGHT -> executeActions(clickActions.get("right"), event);
-                case SHIFT_LEFT -> executeActions(clickActions.get("shift_left"), event);
-                case SHIFT_RIGHT -> executeActions(clickActions.get("shift_right"), event);
-                case MIDDLE -> executeActions(clickActions.get("middle"), event);
-                case DOUBLE_CLICK -> executeActions(clickActions.get("double"), event);
-                case DROP -> executeActions(clickActions.get("drop"), event);
-                case CONTROL_DROP -> executeActions(clickActions.get("ctrl_drop"), event);
-                case NUMBER_KEY -> executeActions(clickActions.get("number_key"), event);
-                case SWAP_OFFHAND -> executeActions(clickActions.get("swap_offhand"), event);
+        if (clickedInventory == null) {
+
+            if (!guiConfig.isLockInventory() && event.getClick().isKeyboardClick()) {
+                event.setCancelled(false);
             }
             return;
         }
 
-        switch (event.getClick()) {
-            case LEFT -> executeActions(clickActions.get("left"), event);
-            case RIGHT -> executeActions(clickActions.get("right"), event);
-            case SHIFT_LEFT -> executeActions(clickActions.get("shift_left"), event);
-            case SHIFT_RIGHT -> executeActions(clickActions.get("shift_right"), event);
-            case MIDDLE -> executeActions(clickActions.get("middle"), event);
-            case DOUBLE_CLICK -> executeActions(clickActions.get("double"), event);
-            case DROP -> executeActions(clickActions.get("drop"), event);
-            case CONTROL_DROP -> executeActions(clickActions.get("ctrl_drop"), event);
+        if (clickedInventory.getType() == InventoryType.PLAYER) {
+
+            if (!guiConfig.isLockInventory()) {
+
+                event.setCancelled(false);
+
+                if (event.getClick().isShiftClick()) {
+                    event.setCancelled(true);
+                    executeClickActions(event, holder, guiConfig, player);
+                }
+            }
+            return;
         }
+
+        if (clickedInventory.equals(event.getView().getTopInventory())) {
+            executeClickActions(event, holder, guiConfig, player);
+        }
+    }
+
+    private void executeClickActions(InventoryClickEvent event, CustomInventoryHolder holder,
+                                     GuiConfig guiConfig, Player player) {
+        int slot = event.getSlot();
+        Map<String, GuiConfig.ClickAction> clickActions = guiConfig.getClickActions(slot, player);
+
+        executeActions(clickActions.get("all"), event);
+
+        String clickType = getClickType(event);
+        if (clickType != null) {
+            executeActions(clickActions.get(clickType), event);
+        }
+    }
+
+    private String getClickType(InventoryClickEvent event) {
+        return switch (event.getClick()) {
+            case LEFT -> "left";
+            case RIGHT -> "right";
+            case SHIFT_LEFT -> "shift_left";
+            case SHIFT_RIGHT -> "shift_right";
+            case MIDDLE -> "middle";
+            case DOUBLE_CLICK -> "double";
+            case DROP -> "drop";
+            case CONTROL_DROP -> "ctrl_drop";
+            case NUMBER_KEY -> "number_key";
+            case SWAP_OFFHAND -> "swap_offhand";
+            default -> null;
+        };
     }
 
     private void executeActions(GuiConfig.ClickAction clickAction, InventoryClickEvent event) {
