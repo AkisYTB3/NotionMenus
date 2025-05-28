@@ -39,6 +39,7 @@ public class GuiConfig {
     private final Map<Integer, Boolean> updateItems = new HashMap<>();
     private final Map<String, String> args = new LinkedHashMap<>();
     private final boolean lockInventory;
+    private final List<String> completions;
     private static final Random random = new Random();
 
     public GuiConfig(FileConfiguration config) {
@@ -65,6 +66,7 @@ public class GuiConfig {
         this.refreshRate = config.getInt("refresh_rate", 0);
         this.itemConfigs = new HashMap<>();
         this.clickActions = new HashMap<>();
+        this.completions = config.getStringList("completions");
 
         addHookIfPluginPresent("nexo", new NexoHook(), "Nexo");
         addHookIfPluginPresent("itemsadder", new ItemsAdderHook(), "ItemsAdder");
@@ -107,6 +109,39 @@ public class GuiConfig {
                 args.put(arg, null);
             }
         }
+    }
+
+    public List<String> getCompletions(Player player, String[] args) {
+        List<String> result = new ArrayList<>();
+        if (completions.isEmpty()) return result;
+
+        int argIndex = args.length - 1;
+        if (argIndex >= completions.size()) return result;
+
+        String completion = completions.get(argIndex);
+        if (completion.startsWith("list<") && completion.endsWith(">")) {
+            String type = completion.substring(5, completion.length() - 1);
+            switch (type.toLowerCase()) {
+                case "players":
+                    Bukkit.getOnlinePlayers().forEach(p -> result.add(p.getName()));
+                    break;
+                case "worlds":
+                    Bukkit.getWorlds().forEach(w -> result.add(w.getName()));
+                    break;
+            }
+        } else if (completion.startsWith("%") && completion.endsWith("%")) {
+            if (player != null && NotionMenus.getInstance().isPAPILoaded()) {
+                result.add(PlaceholderAPI.setPlaceholders(player, completion));
+            } else {
+                result.add(completion);
+            }
+        } else if (completion.contains(",")) {
+            Collections.addAll(result, completion.split(","));
+        } else {
+            result.add(completion);
+        }
+
+        return result;
     }
 
     private void addHookIfPluginPresent(String id, ItemHook hook, String plugin) {

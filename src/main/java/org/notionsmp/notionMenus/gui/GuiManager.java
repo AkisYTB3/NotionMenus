@@ -47,6 +47,9 @@ public class GuiManager {
 
             @Override
             public @NotNull List<String> tabComplete(@NotNull CommandSender sender, @NotNull String alias, String[] args) {
+                if (sender instanceof Player player) {
+                    return guiConfig.getCompletions(player, args);
+                }
                 return Collections.emptyList();
             }
         };
