@@ -86,7 +86,11 @@ public class ActionUtil {
                 break;
             case "[player]":
                 processedContent = processContent(content, player, event);
-                Bukkit.dispatchCommand(player, processedContent);
+                player.performCommand(processedContent);
+                break;
+            case "[playerchat]":
+                processedContent = processContent(content, player, event);
+                player.chat(processedContent);
                 break;
             case "[message]":
                 processedContent = processContent(content, player, event);
