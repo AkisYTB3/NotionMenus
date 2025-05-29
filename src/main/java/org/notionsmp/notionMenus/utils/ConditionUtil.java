@@ -11,6 +11,7 @@ import org.notionsmp.notionMenus.gui.GuiConfig;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ConditionUtil {
@@ -117,15 +118,29 @@ public class ConditionUtil {
         String[] parts = processed.split("\\[|\\]");
         if (parts.length < 3) return false;
         String compareValue = parts[2].trim();
-        String[] compareParts = compareValue.split(":");
-        if (compareParts.length < 2) return false;
-        try {
-            double num1 = Double.parseDouble(compareParts[0]);
-            double num2 = Double.parseDouble(compareParts[1]);
-            return num1 > num2;
-        } catch (NumberFormatException e) {
-            return false;
+
+        Pattern pattern = Pattern.compile("^(-?\\d+\\.?\\d*)\\s*([<>]=?|==)\\s*(-?\\d+\\.?\\d*)$");
+        Matcher matcher = pattern.matcher(compareValue);
+
+        if (matcher.find()) {
+            try {
+                double num1 = Double.parseDouble(matcher.group(1).trim());
+                double num2 = Double.parseDouble(matcher.group(3).trim());
+                String operator = matcher.group(2).trim();
+
+                return switch (operator) {
+                    case "<" -> num1 < num2;
+                    case ">" -> num1 > num2;
+                    case "<=" -> num1 <= num2;
+                    case ">=" -> num1 >= num2;
+                    case "==" -> num1 == num2;
+                    default -> false;
+                };
+            } catch (NumberFormatException e) {
+                return false;
+            }
         }
+        return false;
     }
 
     public static boolean checkPermissionCondition(Player player, String permission) {
