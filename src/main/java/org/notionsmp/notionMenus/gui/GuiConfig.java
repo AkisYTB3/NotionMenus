@@ -4,6 +4,9 @@ import com.nexomc.nexo.utils.AdventureUtils;
 import lombok.Getter;
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.Style;
+import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.*;
 import org.bukkit.block.banner.Pattern;
@@ -564,9 +567,12 @@ public class GuiConfig {
     }
 
     private Component parseMiniMessage(String text) {
-        return Bukkit.getPluginManager().isPluginEnabled("Nexo")
+        Component component = Bukkit.getPluginManager().isPluginEnabled("Nexo")
                 ? AdventureUtils.INSTANCE.getMINI_MESSAGE().deserialize(text)
                 : MiniMessage.miniMessage().deserialize(text);
+        return component.decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE)
+                .colorIfAbsent(NamedTextColor.WHITE);
+
     }
 
     private boolean checkViewConditions(List<String> viewConditions, Player player) {
