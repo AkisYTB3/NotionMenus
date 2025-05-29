@@ -160,11 +160,6 @@ public class ConditionUtil {
         return false;
     }
 
-    public static boolean checkPlaceholderCondition(Player player, String placeholder) {
-        String result = GuiConfig.parsePlaceholders(player, placeholder);
-        return Boolean.parseBoolean(result);
-    }
-
     private static String processConditionValue(String value, Player player) {
 
         String processed = value;
