@@ -19,7 +19,7 @@ repositories {
     maven { url 'https://jitpack.io' }
     maven { url 'https://repo.papermc.io/repository/maven-public/' }
     maven { url 'https://oss.sonatype.org/content/groups/public/' }
-    maven { url 'https://repo.nexomc.com/snapshots' }
+    maven { url 'https://repo.nexomc.com/releases' }
     maven { url 'https://repo.extendedclip.com/content/repositories/placeholderapi/' }
     maven { url 'https://maven.devs.beer/' }
     maven { url 'https://repo.aikar.co/content/groups/aikar/' }
