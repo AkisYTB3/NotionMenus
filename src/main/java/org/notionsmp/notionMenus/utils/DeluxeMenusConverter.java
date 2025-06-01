@@ -400,7 +400,7 @@ public class DeluxeMenusConverter {
                 .replaceAll("(?i)&m", "<st>")
                 .replaceAll("(?i)&n", "<u>")
                 .replaceAll("(?i)&o", "<i>")
-                .replaceAll("(?i)&r", "<r>");
+                .replaceAll("(?i)&r", "<reset>");
 
         result = result.replaceAll("(?i)&#([0-9a-f]{6})", "<#$1>");
 
