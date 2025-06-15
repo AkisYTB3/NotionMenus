@@ -283,10 +283,33 @@ public class DeluxeMenusConverter {
                     conditions.add("[near] " + convertIsNear(nearSection));
                 }
             }
-            case "string equals" -> conditions.add("[equals] " + requirement.getString("input") + "," + requirement.getString("output"));
-            case "string equals ignorecase" -> conditions.add("[equals] " + requirement.getString("input") + "," + requirement.getString("output") + ",true");
-            case "string contains" -> conditions.add("[contains] " + requirement.getString("input") + "," + requirement.getString("output"));
-            case "regex matches" -> conditions.add("[regex] " + requirement.getString("input") + "," + requirement.getString("regex"));
+            case "string equals" -> conditions.add("[compare](true) " + requirement.getString("input") + " == " + requirement.getString("output"));
+            case "string equals ignorecase" -> conditions.add("[compare] " + requirement.getString("input") + " == " + requirement.getString("output"));
+            case "string contains", "!string contains" -> {
+                String input = requirement.getString("input");
+                String output = requirement.getString("output");
+                String condition = type.startsWith("!") ?
+                        "[!contains] " + input + " " + output :
+                        "[contains] " + input + " " + output;
+                conditions.add(condition);
+            }
+            case "string length", "!string length" -> {
+                String input = requirement.getString("input");
+                int min = requirement.getInt("min");
+                int max = requirement.getInt("max");
+                String condition = type.startsWith("!") ?
+                        "[!length] " + min + " " + max + " " + input :
+                        "[length] " + min + " " + max + " " + input;
+                conditions.add(condition);
+            }
+            case "regex matches", "!regex matches" -> {
+                String input = requirement.getString("input");
+                String regex = requirement.getString("regex");
+                String condition = type.startsWith("!") ?
+                        "[!regex] " + input + " " + regex :
+                        "[regex] " + input + " " + regex;
+                conditions.add(condition);
+            }
             case "javascript" -> conditions.add("[compare] " + requirement.getString("expression"));
             case "has meta" -> {
                 ConfigurationSection metaSection = requirement.getConfigurationSection("meta");
