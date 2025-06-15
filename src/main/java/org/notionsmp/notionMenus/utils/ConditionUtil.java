@@ -1,5 +1,6 @@
 package org.notionsmp.notionMenus.utils;
 
+import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -83,44 +84,78 @@ public class ConditionUtil {
         return count >= requiredCount;
     }
 
-    public static boolean checkEqualsCondition(Player player, String condition) {
-        String processed = processConditionValue(condition, player);
-        String[] parts = processed.split("\\[|\\]");
-        if (parts.length < 3) return false;
-        String compareValue = parts[2].trim();
-        String[] compareParts = compareValue.split(":");
-        if (compareParts.length < 2) return false;
-        return compareParts[0].equals(compareParts[1]);
-    }
-
     public static boolean checkContainsCondition(Player player, String condition) {
         String processed = processConditionValue(condition, player);
-        String[] parts = processed.split("\\[|\\]");
-        if (parts.length < 3) return false;
-        String compareValue = parts[2].trim();
-        String[] compareParts = compareValue.split(":");
-        if (compareParts.length < 2) return false;
-        return compareParts[0].contains(compareParts[1]);
+        String[] parts = processed.split("\\[contains\\]", 2);
+        if (parts.length < 2) return false;
+
+        String[] components = parts[1].trim().split("\\s+", 2);
+        if (components.length < 2) return false;
+
+        return components[0].contains(components[1]);
     }
 
     public static boolean checkRegexCondition(Player player, String condition) {
         String processed = processConditionValue(condition, player);
-        String[] parts = processed.split("\\[|\\]");
-        if (parts.length < 3) return false;
-        String regexValue = parts[2].trim();
-        String[] regexParts = regexValue.split(":");
-        if (regexParts.length < 2) return false;
-        return Pattern.compile(regexParts[1]).matcher(regexParts[0]).matches();
+        String[] parts = processed.split("\\[regex\\]", 2);
+        if (parts.length < 2) return false;
+
+        String[] components = parts[1].trim().split("\\s+", 2);
+        if (components.length < 2) return false;
+
+        String text = components[0];
+        String regex = components[1];
+        return Pattern.compile(regex).matcher(text).find();
+    }
+
+    public static boolean checkPlaceholderCondition(Player player, String condition) {
+        String processed = processConditionValue(condition, player);
+        String[] parts = processed.split("\\[placeholder\\]", 2);
+        if (parts.length < 2) return false;
+
+        String placeholder = parts[1].trim();
+        String value = NotionMenus.getInstance().isPAPILoaded()
+                ? PlaceholderAPI.setPlaceholders(player, placeholder)
+                : placeholder;
+
+        return Boolean.parseBoolean(value) || "true".equalsIgnoreCase(value);
+    }
+
+    public static boolean checkLengthCondition(Player player, String condition) {
+        String processed = processConditionValue(condition, player);
+        String[] parts = processed.split("\\[length\\]", 2);
+        if (parts.length < 2) return false;
+
+        String[] components = parts[1].trim().split("\\s+", 3);
+        if (components.length < 3) return false;
+
+        try {
+            int min = Integer.parseInt(components[0]);
+            int max = Integer.parseInt(components[1]);
+            String input = components[2];
+            int length = input.length();
+            return length >= min && length <= max;
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 
     public static boolean checkCompareCondition(Player player, String condition) {
         String processed = processConditionValue(condition, player);
-        String[] parts = processed.split("\\[|\\]");
-        if (parts.length < 3) return false;
-        String compareValue = parts[2].trim();
+        String[] parts = processed.split("\\[compare\\]", 2);
+        if (parts.length < 2) return false;
+
+        String comparison = parts[1].trim();
+
+        if (comparison.contains("==")) {
+            String[] operands = comparison.split("==", 2);
+            if (operands.length == 2) {
+                return operands[0].trim().equals(operands[1].trim());
+            }
+        }
 
         Pattern pattern = Pattern.compile("^(-?\\d+\\.?\\d*)\\s*([<>]=?|==)\\s*(-?\\d+\\.?\\d*)$");
-        Matcher matcher = pattern.matcher(compareValue);
+        Matcher matcher = pattern.matcher(comparison);
 
         if (matcher.find()) {
             try {
@@ -227,12 +262,6 @@ public class ConditionUtil {
                 case "!near":
                     result = !checkNearCondition(player, processedCondition);
                     break;
-                case "equals":
-                    result = checkEqualsCondition(player, processedCondition);
-                    break;
-                case "!equals":
-                    result = !checkEqualsCondition(player, processedCondition);
-                    break;
                 case "contains":
                     result = checkContainsCondition(player, processedCondition);
                     break;
@@ -244,6 +273,18 @@ public class ConditionUtil {
                     break;
                 case "!regex":
                     result = !checkRegexCondition(player, processedCondition);
+                    break;
+                case "placeholder":
+                    result = checkPlaceholderCondition(player, processedCondition);
+                    break;
+                case "!placeholder":
+                    result = !checkPlaceholderCondition(player, processedCondition);
+                    break;
+                case "length":
+                    result = checkLengthCondition(player, processedCondition);
+                    break;
+                case "!length":
+                    result = !checkLengthCondition(player, processedCondition);
                     break;
                 case "compare":
                     result = checkCompareCondition(player, processedCondition);
