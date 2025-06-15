@@ -150,7 +150,7 @@ public class GuiManager {
         }
 
         String title = GuiConfig.replacePlaceholders(player,
-                GuiConfig.parsePlaceholders(player, guiConfig.getTitle()), parsedArgs);
+                guiConfig.getTitle(), parsedArgs);
         Inventory gui = Bukkit.createInventory(new CustomInventoryHolder(guiId, parsedArgs),
                 guiConfig.getSize(), MiniMessage.miniMessage().deserialize(title));
         updateGuiItems(gui, guiConfig, player, parsedArgs);
