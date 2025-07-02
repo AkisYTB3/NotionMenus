@@ -52,11 +52,7 @@ public class NotionMenus extends JavaPlugin {
         getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
 
         checkForVaultWithRetries(0);
-        initMetrics();
-    }
-
-    private void initMetrics() {
-        Metrics metrics = new Metrics(this, 25732);
+        new Metrics(this, 25732);
     }
 
     public static Component NotionString(String... strings) {
@@ -123,9 +119,7 @@ public class NotionMenus extends JavaPlugin {
                     isVaultUnlocked = true;
                     return true;
                 }
-            } catch (ClassNotFoundException e) {
-
-            }
+            } catch (ClassNotFoundException ignored) {}
 
             return false;
         } catch (Exception e) {
@@ -147,9 +141,7 @@ public class NotionMenus extends JavaPlugin {
                         getLogger().info("Hooked into VaultUnlocked permissions");
                         return;
                     }
-                } catch (ClassNotFoundException e) {
-
-                }
+                } catch (ClassNotFoundException ignored) {}
             }
 
             rsp = getServer().getServicesManager().getRegistration(Permission.class);
